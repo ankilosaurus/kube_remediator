@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kube-remediator
+  labels:
+    project: kube-remediator
+    role: app-server
+    team: compute
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      project: kube-remediator
+      role: app-server
+  template:
+    metadata:
+      labels:
+        project: kube-remediator
+        role: app-server
+        team: compute
+    spec:
+      serviceAccountName: monitor-pods-acc
+      containers:
+        - name: remediator
+          image: gcr.io/docker-images-180022/remediator:1
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          #        livenessProbe:
+          #          httpGet:
+          #            path: /healthz
+          #            port: 80
+          ports:
+            - name: main-port
+              containerPort: 80
