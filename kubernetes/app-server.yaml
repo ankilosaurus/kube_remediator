@@ -22,7 +22,7 @@ spec:
       serviceAccountName: monitor-pods-acc
       containers:
         - name: remediator
-          image: gcr.io/docker-images-180022/remediator:1
+          image:
           imagePullPolicy: Always
           resources:
             limits:

@@ -1,9 +1,11 @@
 # Kube Janitor
+Missing icon
 
+## List
 - [Reschedules Pods in CrashLoopBackOff](#crashloopbackoff-rescheduler)
 - [Deletes unbound PVCs](#unbound-persistentvolumeclaim-cleaner)
 
-## CrashLoopBackOff rescheduler
+### CrashLoopBackOff rescheduler
 
 Reschedules Pods in CrashLoopBackOff.
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (configurable).
@@ -15,7 +17,7 @@ Why:
 - stale init-container/sidecar. 
 
 
-##  Unbound PersistentVolumeClaim cleaner
+### Unbound PersistentVolumeClaim cleaner
 
 Deletes left behind PersistentVolumeClaims.
 - Waits for 7 days(configurable) before deleting.
@@ -26,6 +28,19 @@ Why:
 - When Statefulset gets deleted, associated PersistentVolumeClaims are not automatically deleted.
 
 
+## Development
 
+Running locally:
+```bash
+go build -o .build/remediator cmd/remediator/app.go
+.build/remediator -kubeconfig ~/.kube/config 
+```
+
+
+## Deploy
+```bash
+kubectl apply -f kubernetes/rbac.yaml
+kubectl apply -f kubernetes/app-server.yml
+```
 
 
