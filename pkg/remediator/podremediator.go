@@ -109,10 +109,13 @@ func (p *PodRemediator) hasUnhealthyContainer(logger * zap.Logger, pod *v1.Pod) 
 
 	// Check if any of Containers is in CrashLoop
 	for _, containerStatus := range append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...) {
-		if containerStatus.State.Waiting != nil &&
-			containerStatus.State.Waiting.Reason == "CrashLoopBackOff" &&
-			containerStatus.RestartCount > p.filter.failureThreshold {
-			return true
+		if containerStatus.RestartCount > p.filter.failureThreshold {
+			if containerStatus.State.Waiting != nil && containerStatus.State.Waiting.Reason == "CrashLoopBackOff" {
+				return true
+			}
+			if containerStatus.State.Terminated && containerStatus.State.Terminated.Reason == "Error" {
+				return true
+			}
 		}
 		//TODO: other conditions
 	}
