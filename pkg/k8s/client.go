@@ -15,6 +15,7 @@ import (
 )
 
 type Client struct {
+	logger *zap.Logger
 	clientSet *kubernetes.Clientset
 }
 
@@ -46,7 +47,7 @@ func (c *Client) GetPodDisruptionBudgets(namespace string) (*v1beta1.PodDisrupti
 	return podDisruptionBudgets, err
 }
 
-func GetNewClient(logger *zap.Logger) (*Client, error) {
+func NewClient(logger *zap.Logger) (*Client, error) {
 	var err error
 	var config *restclient.Config
 	if os.Getenv("KUBERNETES_SERVICE_HOST") == "" {
@@ -67,5 +68,5 @@ func GetNewClient(logger *zap.Logger) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{clientSet: clientSet}, err
+	return &Client{clientSet: clientSet, logger: logger}, err
 }

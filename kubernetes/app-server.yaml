@@ -22,7 +22,7 @@ spec:
       serviceAccountName: monitor-pods-acc
       containers:
         - name: remediator
-          image:
+          image: ankylosaurus/kube-remediator:latest
           imagePullPolicy: Always
           resources:
             limits:

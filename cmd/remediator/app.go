@@ -40,7 +40,7 @@ func main() {
 	runtime.Must(err)
 
 	// init client
-	k8sClient, err := k8s.GetNewClient(logger)
+	k8sClient, err := k8s.NewClient(logger)
 	if err != nil {
 		logger.Panic("Error initializing k8s client: ", zap.Error(err))
 	}
@@ -58,7 +58,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		podRemediator.Run(logger, stopCh)
+		podRemediator.Run(stopCh)
 	}()
 	wg.Wait()
 
