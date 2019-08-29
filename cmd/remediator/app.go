@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// init remediators
-	podRemediator, err := remediator.GetNewPodRemediator(logger, k8sClient)
+	podRemediator, err := remediator.NewPodRemediator(logger, k8sClient)
 	if err != nil {
 		logger.Panic("Error initializing Pod remediator: ", zap.Error(err))
 	}
