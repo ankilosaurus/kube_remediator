@@ -40,7 +40,7 @@ go build -o .build/remediator cmd/remediator/app.go
 ## Deploy
 ```bash
 kubectl apply -f kubernetes/rbac.yaml
-kubectl apply -f kubernetes/app-server.yml:w
+kubectl apply -f kubernetes/app-server.yml
 ```
 
 
