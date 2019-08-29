@@ -23,13 +23,14 @@ type PodRemediator struct {
 
 func (p  *PodRemediator) Run(logger *zap.Logger, stopCh <-chan struct{}) {
 	ticker := time.NewTicker(time.Duration(p.frequency) * time.Minute)
+	MainLoop:
 	for {
 		select {
 		case <-ticker.C:
 			p.rescheduleUnhealthyPods(logger)
 		case s := <-stopCh:
 			logger.Sugar().Infof("Pod remediator received a signal (%v) to terminate", s)
-			break
+			break MainLoop
 		}
 	}
 }
