@@ -58,7 +58,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		podRemediator.Run(logger, stopCh)
+		podRemediator.Run(stopCh)
 	}()
 	wg.Wait()
 
