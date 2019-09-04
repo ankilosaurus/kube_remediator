@@ -10,10 +10,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /remediator cmd/remediator/app.go
 # pack
 FROM gcr.io/docker-images-180022/base/alpine:3.10
 
-WORKDIR /app
+WORKDIR .
 
 ADD config config
 
 COPY --from=builder /remediator .
 
-CMD ["/app/remediator"]
+CMD ["./remediator"]
