@@ -3,6 +3,7 @@ package remediator
 import (
 	"time"
 	"go.uber.org/zap"
+	"github.com/spf13/viper"
 
 	v1 "k8s.io/api/core/v1"
 	//v1beta1 "k8s.io/api/policy/v1beta1"
@@ -58,6 +59,7 @@ func (p *PodRemediator) rescheduleUnhealthyPods() {
 	}
 }
 
+// Assuming Pod has owner reference of kind Controller
 func (p *PodRemediator) podHasController(pod *v1.Pod) bool {
 	return len(pod.ObjectMeta.OwnerReferences) > 0
 }
@@ -101,15 +103,30 @@ func (p *PodRemediator) isPodUnhealthy(pod *v1.Pod) bool {
 
 func NewPodRemediator(logger *zap.Logger, client *k8s.Client) (*PodRemediator, error) {
 	//TODO: read pod config
+	viper.SetConfigFile("config/pod_remediator.json")
+	viper.SetConfigType("json")
+	logger.Sugar().Infof("Reading config from %v", viper.ConfigFileUsed())
+	filter := PodFilter{
+		annotation: "kube_remediator/restart_unhealthy",
+		failureThreshold: 5,
+		namespace: "",
+	}
+	if err := viper.ReadInConfig(); err != nil {
+		logger.Error("Failed to read config file", zap.Error(err))
+	} else {
+		logger.Sugar().Infof("Config: %v", viper.AllSettings())
+		filter = PodFilter{
+			annotation: viper.GetString("annotation"),
+			failureThreshold: viper.GetInt32("failureThreshold"),
+			namespace: viper.GetString("namespace"),
+		}
+	}
+
 	p := &PodRemediator{
 			client: client,
 			logger: logger,
 			frequency: 1, // Use duration
-			filter: PodFilter{
-				annotation: "kube_remediator/restart_unhealthy",
-				failureThreshold: 5,
-				namespace: "",
-			},
+			filter: filter,
 	}
 	return p, nil
 }
