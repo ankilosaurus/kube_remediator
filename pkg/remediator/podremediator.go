@@ -47,13 +47,17 @@ func (p *PodRemediator) rescheduleUnhealthyPods() {
 		p.logger.Sugar().Infof("Pod (%v) in namespace (%v)", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
 		if p.canRecoverPod(&pod) {
 			if p.podHasController(&pod) == true {
-				p.logger.Sugar().Infof("Pod (%v) in namespace (%v) is marked for deletion",
+				p.logger.Sugar().Infof("Deleting a Pod (%v) in Namespace (%v)",
 					pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
-				p.client.DeletePod(pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
+				if err := p.client.DeletePod(pod.ObjectMeta.Name, pod.ObjectMeta.Namespace); err != nil {
+					p.logger.Error("Error deleting a pod: ", zap.Error(err))
+				}
 			} else {
-				//TODO: restart the pod
-				p.logger.Sugar().Warnf("Pod (%v) in namespace (%v) without Owner can't be deleted",
+				p.logger.Sugar().Warnf("Restarting a Pod (%v) in Namespace (%v) without Owner",
 					pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
+				if _, err := p.client.RestartPod(&pod); err != nil {
+					p.logger.Error("Error restarting a pod: ", zap.Error(err))
+				}
 			}
 		}
 	}
@@ -96,13 +100,12 @@ func (p *PodRemediator) isPodUnhealthy(pod *v1.Pod) bool {
 				return true
 			}
 		}
-		//TODO: other conditions
 	}
+	//TODO: other conditions
 	return false
 }
 
 func NewPodRemediator(logger *zap.Logger, client *k8s.Client) (*PodRemediator, error) {
-	//TODO: read pod config
 	viper.SetConfigFile("config/pod_remediator.json")
 	viper.SetConfigType("json")
 	logger.Sugar().Infof("Reading config from %v", viper.ConfigFileUsed())

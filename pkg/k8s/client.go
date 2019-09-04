@@ -27,24 +27,19 @@ func (c *Client) DeletePod(name string, namespace string) error {
 	return c.clientSet.CoreV1().Pods(namespace).Delete(name, &metav1.DeleteOptions{})
 }
 
-func (c *Client) CreatePod(pod *apiv1.Pod) (*apiv1.Pod, error) {
+func (c *Client) RestartPod(pod *apiv1.Pod) (*apiv1.Pod, error) {
+	if err := c.DeletePod(pod.ObjectMeta.Name, pod.ObjectMeta.Namespace); err != nil {
+		return nil, err
+	}
 	return c.clientSet.CoreV1().Pods(pod.ObjectMeta.Namespace).Create(pod)
 }
 
 func (c *Client) GetPodDisruptionBudget(name string, namespace string) (*v1beta1.PodDisruptionBudget, error) {
-	podDisruptionBudget, err := c.clientSet.PolicyV1beta1().PodDisruptionBudgets(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return podDisruptionBudget, err
+	return c.clientSet.PolicyV1beta1().PodDisruptionBudgets(namespace).Get(name, metav1.GetOptions{})
 }
 
 func (c *Client) GetPodDisruptionBudgets(namespace string) (*v1beta1.PodDisruptionBudgetList, error) {
-	podDisruptionBudgets, err := c.clientSet.PolicyV1beta1().PodDisruptionBudgets(namespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return podDisruptionBudgets, err
+	return c.clientSet.PolicyV1beta1().PodDisruptionBudgets(namespace).List(metav1.ListOptions{})
 }
 
 func NewClient(logger *zap.Logger) (*Client, error) {
