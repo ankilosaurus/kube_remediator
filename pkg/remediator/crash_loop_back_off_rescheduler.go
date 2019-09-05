@@ -23,7 +23,9 @@ type CrashLoopBackOffRescheduler struct {
 
 // Entrypoint
 func (p *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
+	p.reschedulePods() // first tick on start
 	ticker := time.NewTicker(p.frequency)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
