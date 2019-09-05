@@ -1,0 +1,12 @@
+# example pod that will crashloop for integration test of CrashLoopBackOffRescheduler
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox
+  annotations:
+    kube-remediator/CrashLoopBackOffRemediator: "true"
+spec:
+  containers:
+    - image: busybox
+      name: busybox
+      command: ["this-is-bad"]

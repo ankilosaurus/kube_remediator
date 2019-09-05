@@ -1,28 +1,28 @@
 package remediator
 
 import (
-	"time"
-	"go.uber.org/zap"
-	"github.com/spf13/viper"
-	v1 "k8s.io/api/core/v1"
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	v1 "k8s.io/api/core/v1"
+	"time"
 )
 
 type PodFilter struct {
-	annotation string
+	annotation       string
 	failureThreshold int32
-	namespace string
+	namespace        string
 }
 
 type CrashLoopBackOffRescheduler struct {
-	client *k8s.Client
-	logger *zap.SugaredLogger
+	client    *k8s.Client
+	logger    *zap.SugaredLogger
 	frequency int // in minutes
-	filter PodFilter
+	filter    PodFilter
 }
 
 // Entrypoint
-func (p  *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
+func (p *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
 	ticker := time.NewTicker(time.Duration(p.frequency) * time.Minute)
 	for {
 		select {
@@ -37,22 +37,28 @@ func (p  *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
 
 func (p *CrashLoopBackOffRescheduler) reschedulePods() {
 	for _, pod := range *p.getCrashLoopBackOffPods() {
-		p.logger.Infof("Pod (%v) in namespace (%v)", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
-		if p.canRecoverPod(&pod) {
-			if p.podHasController(&pod) == true {
-				p.logger.Infof("Deleting a Pod (%v) in Namespace (%v)",
-					pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
-				if err := p.client.DeletePod(pod.ObjectMeta.Name, pod.ObjectMeta.Namespace); err != nil {
-					p.logger.Error("Error deleting a pod: ", zap.Error(err))
-				}
+		if p.canRecoverPod(&pod) { // TODO: stop early
+			podInfo := []zap.Field{
+				zap.String("name", pod.ObjectMeta.Name),
+				zap.String("namespace", pod.ObjectMeta.Namespace),
+			}
+			if p.podHasController(&pod) {
+				p.tryWithLogging("Deleting Pod", &podInfo, func() error {
+					return p.client.DeletePod(&pod)
+				})
 			} else {
-				p.logger.Warnf("Restarting a Pod (%v) in Namespace (%v) without Owner",
-					pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
-				if _, err := p.client.RestartPod(&pod); err != nil {
-					p.logger.Error("Error restarting a pod: ", zap.Error(err))
-				}
+				p.tryWithLogging("Recreating Pod", &podInfo, func() error {
+					return p.client.RecreatePod(&pod)
+				})
 			}
 		}
+	}
+}
+
+func (p *CrashLoopBackOffRescheduler) tryWithLogging(message string, logInfo *[]zap.Field, fn func() error) {
+	p.logger.Info(message, logInfo)
+	if err := fn(); err != nil {
+		p.logger.Error("Error "+message, append(*logInfo, zap.Error(err)))
 	}
 }
 
@@ -68,7 +74,7 @@ func (p *CrashLoopBackOffRescheduler) canRecoverPod(pod *v1.Pod) bool {
 func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 	p.logger.Info("getCrashLoopBackOffPods: START")
 	allPods, err := p.client.GetPods(p.filter.namespace)
-	if err != nil  {
+	if err != nil {
 		p.logger.Error("Error getting pod list: ", zap.Error(err))
 		return &[]v1.Pod{}
 	}
@@ -103,26 +109,26 @@ func NewPodRemediator(logger *zap.SugaredLogger, client *k8s.Client) (*CrashLoop
 	viper.SetConfigType("json")
 	logger.Infof("Reading config from %v", viper.ConfigFileUsed())
 	filter := PodFilter{
-		annotation: "kube_remediator/restart_unhealthy",
+		annotation:       "kube_remediator/restart_unhealthy",
 		failureThreshold: 5,
-		namespace: "",
+		namespace:        "",
 	}
 	if err := viper.ReadInConfig(); err != nil {
 		logger.Error("Failed to read config file", zap.Error(err))
 	} else {
 		logger.Infof("Config: %v", viper.AllSettings())
 		filter = PodFilter{
-			annotation: viper.GetString("annotation"),
+			annotation:       viper.GetString("annotation"),
 			failureThreshold: viper.GetInt32("failureThreshold"),
-			namespace: viper.GetString("namespace"),
+			namespace:        viper.GetString("namespace"),
 		}
 	}
 
 	p := &CrashLoopBackOffRescheduler{
-			client: client,
-			logger: logger,
-			frequency: 1, // Use duration
-			filter: filter,
+		client:    client,
+		logger:    logger,
+		frequency: 1, // Use duration
+		filter:    filter,
 	}
 	return p, nil
 }

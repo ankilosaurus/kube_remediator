@@ -6,9 +6,9 @@ import (
 	"sync"
 	"syscall"
 
-	"go.uber.org/zap"
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
 	"github.com/aksgithub/kube_remediator/pkg/remediator"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
@@ -53,7 +53,7 @@ func main() {
 
 	stopCh := signalHandler(logger)
 
-	logger.Info("Starting Pod remediator")
+	logger.Info("Starting CrashLoopBackOffRescheduler")
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
