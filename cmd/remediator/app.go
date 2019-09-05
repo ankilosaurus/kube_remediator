@@ -6,15 +6,14 @@ import (
 	"sync"
 	"syscall"
 
-	"go.uber.org/zap"
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
 	"github.com/aksgithub/kube_remediator/pkg/remediator"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/runtime"
-	//"k8s.io/apimachinery/pkg/api/errors"
 )
 
-// setup a signal handler to gracefully exit
-func sigHandler(logger *zap.Logger) <-chan struct{} {
+// catch interrupts to gracefully exit since otherwise goroutines get killed without running defer
+func signalHandler(logger *zap.SugaredLogger) <-chan struct{} {
 	stop := make(chan struct{})
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -25,8 +24,8 @@ func sigHandler(logger *zap.Logger) <-chan struct{} {
 			syscall.SIGABRT,
 			syscall.SIGILL,
 			syscall.SIGFPE)
-		sig := <-c
-		logger.Sugar().Warnf("Signal (%v) Detected, Shutting Down", sig)
+		signal := <-c
+		logger.Warnf("Signal (%v) Received, Shutting Down", signal)
 		close(stop)
 	}()
 	return stop
@@ -36,8 +35,9 @@ func main() {
 	var wg sync.WaitGroup
 
 	// init log
-	logger, err := zap.NewProduction()
+	plainLogger, err := zap.NewProduction()
 	runtime.Must(err)
+	logger := plainLogger.Sugar()
 
 	// init client
 	k8sClient, err := k8s.NewClient(logger)
@@ -51,10 +51,9 @@ func main() {
 		logger.Panic("Error initializing Pod remediator: ", zap.Error(err))
 	}
 
+	stopCh := signalHandler(logger)
 
-	stopCh := sigHandler(logger)
-
-	logger.Info("Starting Pod remediator")
+	logger.Info("Starting CrashLoopBackOffRescheduler")
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

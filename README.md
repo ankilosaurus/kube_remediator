@@ -5,7 +5,7 @@ Missing icon
 - [Reschedules Pods in CrashLoopBackOff](#crashloopbackoff-rescheduler)
 - [Deletes unbound PVCs](#unbound-persistentvolumeclaim-cleaner)
 
-### CrashLoopBackOff rescheduler
+### [CrashLoopBackOff Rescheduler](pkg/remediator/crash_loop_back_off_rescheduler.go)
 
 Reschedules Pods in CrashLoopBackOff.
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (configurable).
@@ -30,14 +30,16 @@ Why:
 
 ## Development
 
-Running locally:
+Running locally on currently selected kubernetes cluster with go ~> 1.12.9:
 ```bash
-go build -o .build/remediator cmd/remediator/app.go
+go mod vendor
+go build -mod vendor -o .build/remediator cmd/remediator/app.go
 .build/remediator -kubeconfig ~/.kube/config 
 ```
 
 
 ## Deploy
+
 ```bash
 kubectl apply -f kubernetes/rbac.yaml
 kubectl apply -f kubernetes/app-server.yml
