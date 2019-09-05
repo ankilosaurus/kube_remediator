@@ -1,5 +1,6 @@
 # Kube Remediator
-Missing icon
+
+![Kube Remediator Logo ](logo/logo.png)
 
 ## List
 - [Reschedules Pods in CrashLoopBackOff](#crashloopbackoff-rescheduler)
@@ -8,6 +9,7 @@ Missing icon
 ### [CrashLoopBackOff Rescheduler](pkg/remediator/crash_loop_back_off_rescheduler.go)
 
 Reschedules Pods in CrashLoopBackOff.
+- Runs every X = `frequency` (configurable).
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (configurable).
 - Ignores Pods without annotation `kube_remediator/CrashLoopBackOffRemediator`
 - Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back. TODO: recreate instead of ignoring).
