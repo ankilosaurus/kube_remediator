@@ -1,4 +1,4 @@
-# Kube Janitor
+# Kube Remediator
 Missing icon
 
 ## List
