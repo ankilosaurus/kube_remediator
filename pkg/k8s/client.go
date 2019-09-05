@@ -15,7 +15,7 @@ import (
 )
 
 type Client struct {
-	logger *zap.Logger
+	logger *zap.SugaredLogger
 	clientSet *kubernetes.Clientset
 }
 
@@ -42,7 +42,7 @@ func (c *Client) GetPodDisruptionBudgets(namespace string) (*v1beta1.PodDisrupti
 	return c.clientSet.PolicyV1beta1().PodDisruptionBudgets(namespace).List(metav1.ListOptions{})
 }
 
-func NewClient(logger *zap.Logger) (*Client, error) {
+func NewClient(logger *zap.SugaredLogger) (*Client, error) {
 	var err error
 	var config *restclient.Config
 	if os.Getenv("KUBERNETES_SERVICE_HOST") == "" {

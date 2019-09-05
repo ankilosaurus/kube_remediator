@@ -13,7 +13,7 @@ import (
 )
 
 // catch interrupts to gracefully exit since otherwise goroutines get killed without running defer
-func signalHandler(logger *zap.Logger) <-chan struct{} {
+func signalHandler(logger *zap.SugaredLogger) <-chan struct{} {
 	stop := make(chan struct{})
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -25,7 +25,7 @@ func signalHandler(logger *zap.Logger) <-chan struct{} {
 			syscall.SIGILL,
 			syscall.SIGFPE)
 		signal := <-c
-		logger.Sugar().Warnf("Signal (%v) Received, Shutting Down", signal)
+		logger.Warnf("Signal (%v) Received, Shutting Down", signal)
 		close(stop)
 	}()
 	return stop
@@ -35,8 +35,9 @@ func main() {
 	var wg sync.WaitGroup
 
 	// init log
-	logger, err := zap.NewProduction()
+	plainLogger, err := zap.NewProduction()
 	runtime.Must(err)
+	logger := plainLogger.Sugar()
 
 	// init client
 	k8sClient, err := k8s.NewClient(logger)

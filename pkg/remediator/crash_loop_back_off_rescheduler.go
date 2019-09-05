@@ -16,7 +16,7 @@ type PodFilter struct {
 
 type CrashLoopBackOffRescheduler struct {
 	client *k8s.Client
-	logger *zap.Logger
+	logger *zap.SugaredLogger
 	frequency int // in minutes
 	filter PodFilter
 }
@@ -37,16 +37,16 @@ func (p  *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
 
 func (p *CrashLoopBackOffRescheduler) reschedulePods() {
 	for _, pod := range *p.getCrashLoopBackOffPods() {
-		p.logger.Sugar().Infof("Pod (%v) in namespace (%v)", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
+		p.logger.Infof("Pod (%v) in namespace (%v)", pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
 		if p.canRecoverPod(&pod) {
 			if p.podHasController(&pod) == true {
-				p.logger.Sugar().Infof("Deleting a Pod (%v) in Namespace (%v)",
+				p.logger.Infof("Deleting a Pod (%v) in Namespace (%v)",
 					pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
 				if err := p.client.DeletePod(pod.ObjectMeta.Name, pod.ObjectMeta.Namespace); err != nil {
 					p.logger.Error("Error deleting a pod: ", zap.Error(err))
 				}
 			} else {
-				p.logger.Sugar().Warnf("Restarting a Pod (%v) in Namespace (%v) without Owner",
+				p.logger.Warnf("Restarting a Pod (%v) in Namespace (%v) without Owner",
 					pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
 				if _, err := p.client.RestartPod(&pod); err != nil {
 					p.logger.Error("Error restarting a pod: ", zap.Error(err))
@@ -75,7 +75,7 @@ func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 	unhealthyPods := &v1.PodList{}
 	for _, pod := range allPods.Items {
 		if p.isPodUnhealthy(&pod) == true {
-			p.logger.Sugar().Infof("Pod (%v) in namespace (%v) is unhealthy",
+			p.logger.Infof("Pod (%v) in namespace (%v) is unhealthy",
 				pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
 			unhealthyPods.Items = append(unhealthyPods.Items, pod)
 		}
@@ -98,10 +98,10 @@ func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 	return false
 }
 
-func NewPodRemediator(logger *zap.Logger, client *k8s.Client) (*CrashLoopBackOffRescheduler, error) {
+func NewPodRemediator(logger *zap.SugaredLogger, client *k8s.Client) (*CrashLoopBackOffRescheduler, error) {
 	viper.SetConfigFile("config/pod_remediator.json")
 	viper.SetConfigType("json")
-	logger.Sugar().Infof("Reading config from %v", viper.ConfigFileUsed())
+	logger.Infof("Reading config from %v", viper.ConfigFileUsed())
 	filter := PodFilter{
 		annotation: "kube_remediator/restart_unhealthy",
 		failureThreshold: 5,
@@ -110,7 +110,7 @@ func NewPodRemediator(logger *zap.Logger, client *k8s.Client) (*CrashLoopBackOff
 	if err := viper.ReadInConfig(); err != nil {
 		logger.Error("Failed to read config file", zap.Error(err))
 	} else {
-		logger.Sugar().Infof("Config: %v", viper.AllSettings())
+		logger.Infof("Config: %v", viper.AllSettings())
 		filter = PodFilter{
 			annotation: viper.GetString("annotation"),
 			failureThreshold: viper.GetInt32("failureThreshold"),
