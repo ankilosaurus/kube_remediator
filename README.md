@@ -5,7 +5,7 @@ Missing icon
 - [Reschedules Pods in CrashLoopBackOff](#crashloopbackoff-rescheduler)
 - [Deletes unbound PVCs](#unbound-persistentvolumeclaim-cleaner)
 
-### CrashLoopBackOff rescheduler
+### [CrashLoopBackOff Rescheduler](pkg/remediator/crash_loop_back_off_rescheduler.go)
 
 Reschedules Pods in CrashLoopBackOff.
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (configurable).

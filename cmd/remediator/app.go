@@ -10,7 +10,6 @@ import (
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
 	"github.com/aksgithub/kube_remediator/pkg/remediator"
 	"k8s.io/apimachinery/pkg/util/runtime"
-	//"k8s.io/apimachinery/pkg/api/errors"
 )
 
 // setup a signal handler to gracefully exit
