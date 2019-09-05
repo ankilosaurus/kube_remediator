@@ -17,13 +17,13 @@ type PodFilter struct {
 type CrashLoopBackOffRescheduler struct {
 	client    *k8s.Client
 	logger    *zap.SugaredLogger
-	frequency int // in minutes
+	frequency time.Duration
 	filter    PodFilter
 }
 
 // Entrypoint
 func (p *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
-	ticker := time.NewTicker(time.Duration(p.frequency) * time.Minute)
+	ticker := time.NewTicker(p.frequency)
 	for {
 		select {
 		case <-ticker.C:
@@ -127,7 +127,7 @@ func NewPodRemediator(logger *zap.SugaredLogger, client *k8s.Client) (*CrashLoop
 	p := &CrashLoopBackOffRescheduler{
 		client:    client,
 		logger:    logger,
-		frequency: 1, // Use duration
+		frequency: viper.GetDuration("frequency"),
 		filter:    filter,
 	}
 	return p, nil
