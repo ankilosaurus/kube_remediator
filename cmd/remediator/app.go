@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
-// setup a signal handler to gracefully exit
-func sigHandler(logger *zap.Logger) <-chan struct{} {
+// catch interrupts to gracefully exit since otherwise goroutines get killed without running defer
+func signalHandler(logger *zap.Logger) <-chan struct{} {
 	stop := make(chan struct{})
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -24,8 +24,8 @@ func sigHandler(logger *zap.Logger) <-chan struct{} {
 			syscall.SIGABRT,
 			syscall.SIGILL,
 			syscall.SIGFPE)
-		sig := <-c
-		logger.Sugar().Warnf("Signal (%v) Detected, Shutting Down", sig)
+		signal := <-c
+		logger.Sugar().Warnf("Signal (%v) Received, Shutting Down", signal)
 		close(stop)
 	}()
 	return stop
@@ -50,8 +50,7 @@ func main() {
 		logger.Panic("Error initializing Pod remediator: ", zap.Error(err))
 	}
 
-
-	stopCh := sigHandler(logger)
+	stopCh := signalHandler(logger)
 
 	logger.Info("Starting Pod remediator")
 	wg.Add(1)
