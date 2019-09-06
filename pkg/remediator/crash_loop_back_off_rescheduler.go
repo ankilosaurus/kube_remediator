@@ -45,11 +45,11 @@ func (p *CrashLoopBackOffRescheduler) reschedulePods() {
 				zap.String("namespace", pod.ObjectMeta.Namespace),
 			}
 			if p.podHasController(&pod) {
-				p.tryWithLogging("Deleting Pod", &podInfo, func() error {
+				p.tryWithLogging("Deleting Pod", podInfo, func() error {
 					return p.client.DeletePod(&pod)
 				})
 			} else {
-				p.tryWithLogging("Recreating Pod", &podInfo, func() error {
+				p.tryWithLogging("Recreating Pod", podInfo, func() error {
 					return p.client.RecreatePod(&pod)
 				})
 			}
@@ -57,10 +57,10 @@ func (p *CrashLoopBackOffRescheduler) reschedulePods() {
 	}
 }
 
-func (p *CrashLoopBackOffRescheduler) tryWithLogging(message string, logInfo *[]zap.Field, fn func() error) {
+func (p *CrashLoopBackOffRescheduler) tryWithLogging(message string, logInfo []zap.Field, fn func() error) {
 	p.logger.Info(message, logInfo)
 	if err := fn(); err != nil {
-		p.logger.Error("Error "+message, append(*logInfo, zap.Error(err)))
+		p.logger.Warnf("Error "+message, append(logInfo, zap.Error(err)))
 	}
 }
 

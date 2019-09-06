@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type Client struct {
@@ -31,6 +32,9 @@ func (c *Client) RecreatePod(pod *apiv1.Pod) error {
 	if err := c.DeletePod(pod); err != nil {
 		return err
 	}
+	// TODO: recreation in seperate go routine
+	time.Sleep(10 * time.Second)
+	c.prepareToApply(pod)
 	_, err := c.clientSet.CoreV1().Pods(pod.ObjectMeta.Namespace).Create(pod)
 	return err
 }
@@ -41,6 +45,13 @@ func (c *Client) GetPodDisruptionBudget(name string, namespace string) (*v1beta1
 
 func (c *Client) GetPodDisruptionBudgets(namespace string) (*v1beta1.PodDisruptionBudgetList, error) {
 	return c.clientSet.PolicyV1beta1().PodDisruptionBudgets(namespace).List(metav1.ListOptions{})
+}
+
+func (c *Client) prepareToApply(pod *apiv1.Pod) {
+	pod.ObjectMeta.SetResourceVersion("")
+	pod.ObjectMeta.SetCreationTimestamp(metav1.Time{})
+	pod.ObjectMeta.SetUID("")
+	pod.Status = apiv1.PodStatus{}
 }
 
 func NewClient(logger *zap.SugaredLogger) (*Client, error) {
