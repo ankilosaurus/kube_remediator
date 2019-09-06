@@ -1,10 +1,12 @@
 package remediator
 
 import (
+	"context"
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
+	"sync"
 	"time"
 )
 
@@ -22,7 +24,8 @@ type CrashLoopBackOffRescheduler struct {
 }
 
 // Entrypoint
-func (p *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
+func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	p.reschedulePods() // first tick on start
 	ticker := time.NewTicker(p.frequency)
 	defer ticker.Stop()
@@ -30,7 +33,7 @@ func (p *CrashLoopBackOffRescheduler) Run(stopCh <-chan struct{}) {
 		select {
 		case <-ticker.C:
 			p.reschedulePods()
-		case <-stopCh:
+		case <-ctx.Done():
 			p.logger.Info("Received signal to stop")
 			return
 		}

@@ -22,16 +22,16 @@ spec:
       serviceAccountName: monitor-pods-acc
       containers:
         - name: remediator
-          image: ankylosaurus/kube-remediator:latest
+          image: ankylosaurus/kube-remediator:test
           imagePullPolicy: Always
           resources:
             limits:
               cpu: 100m
               memory: 100Mi
-          #        livenessProbe:
-          #          httpGet:
-          #            path: /healthz
-          #            port: 80
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: main-port
           ports:
             - name: main-port
-              containerPort: 80
+              containerPort: 8080
