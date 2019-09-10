@@ -68,7 +68,7 @@ func (p *CrashLoopBackOffRescheduler) tryWithLogging(message string, logInfo []z
 }
 
 func (p *CrashLoopBackOffRescheduler) shouldReschedule(pod *v1.Pod) bool {
-	return pod.ObjectMeta.Annotations[p.filter.annotation] == "true" && // Opted in
+	return (p.filter.annotation == "" || pod.ObjectMeta.Annotations[p.filter.annotation] == "true") && // Opted in
 		len(pod.ObjectMeta.OwnerReferences) > 0 && // Assuming Pod has owner reference of kind Controller
 		p.isPodUnhealthy(pod)
 }
