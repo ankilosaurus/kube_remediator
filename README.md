@@ -34,8 +34,8 @@ Why:
 
 Running locally on currently selected kubernetes cluster with go ~> 1.12.9:
 ```bash
-go mod vendor
-go build -mod vendor -o .build/remediator cmd/remediator/app.go
+unset GOPATH
+go build -o .build/remediator cmd/remediator/app.go
 .build/remediator -kubeconfig ~/.kube/config 
 ```
 

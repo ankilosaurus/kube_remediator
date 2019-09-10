@@ -6,8 +6,7 @@ COPY . .
 RUN apk update && apk add --no-cache git ca-certificates
 
 # vendor first so we fail when a dependency is missing and do not install random versions
-RUN go mod vendor && CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o /remediator cmd/remediator/app.go
-
+RUN CGO_ENABLED=0 GOOS=linux go build -o /remediator cmd/remediator/app.go
 
 # pack
 FROM gcr.io/docker-images-180022/base/alpine:3.10
