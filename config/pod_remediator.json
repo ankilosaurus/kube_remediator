@@ -1,6 +1,0 @@
-{
-    "status": "NotReady",
-    "frequency": "1m",
-    "failureThreshold": 5,
-    "annotation" : "kube-remediator/CrashLoopBackOffRemediator"
-}

@@ -1,0 +1,9 @@
+language: go
+sudo: false
+branches:
+  only: master
+go: "1.12"
+env:
+- GO111MODULE=on
+# NOTE: `go fmt` does not work, see https://go-review.googlesource.com/c/go/+/153459/
+script: go build cmd/remediator/app.go && [ -z "`ls */**/*.go | xargs -n1 go fmt`" ]

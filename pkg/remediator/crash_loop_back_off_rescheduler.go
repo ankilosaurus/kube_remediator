@@ -17,123 +17,115 @@ type PodFilter struct {
 }
 
 type CrashLoopBackOffRescheduler struct {
-	client    *k8s.Client
-	logger    *zap.SugaredLogger
-	frequency time.Duration
-	filter    PodFilter
+	client   *k8s.Client
+	logger   *zap.Logger
+	interval time.Duration
+	filter   PodFilter
 }
 
 // Entrypoint
 func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	p.reschedulePods() // first tick on start
-	ticker := time.NewTicker(p.frequency)
+
+	ticker := time.NewTicker(p.interval)
 	defer ticker.Stop()
+
+	p.logger.Info("Starting")
+
+	p.reschedulePods() // first tick on start
+
 	for {
 		select {
 		case <-ticker.C:
 			p.reschedulePods()
 		case <-ctx.Done():
-			p.logger.Info("Received signal to stop")
+			p.logger.Info("Stopping", zap.String("reason", "Signal"))
 			return
 		}
 	}
 }
 
+// TODO: check logging looks good
 func (p *CrashLoopBackOffRescheduler) reschedulePods() {
+	p.logger.Info("Running")
+
 	for _, pod := range *p.getCrashLoopBackOffPods() {
-		if p.canRecoverPod(&pod) { // TODO: stop early
-			podInfo := []zap.Field{
-				zap.String("name", pod.ObjectMeta.Name),
-				zap.String("namespace", pod.ObjectMeta.Namespace),
-			}
-			if p.podHasController(&pod) {
-				p.tryWithLogging("Deleting Pod", podInfo, func() error {
-					return p.client.DeletePod(&pod)
-				})
-			} else {
-				p.tryWithLogging("Recreating Pod", podInfo, func() error {
-					return p.client.RecreatePod(&pod)
-				})
-			}
+		podInfo := []zap.Field{
+			zap.String("name", pod.ObjectMeta.Name),
+			zap.String("namespace", pod.ObjectMeta.Namespace),
 		}
+		p.tryWithLogging("Deleting Pod", podInfo, func() error {
+			return p.client.DeletePod(&pod)
+		})
 	}
 }
 
 func (p *CrashLoopBackOffRescheduler) tryWithLogging(message string, logInfo []zap.Field, fn func() error) {
-	p.logger.Info(message, logInfo)
+	p.logger.Info(message, logInfo...)
 	if err := fn(); err != nil {
-		p.logger.Warnf("Error "+message, append(logInfo, zap.Error(err)))
+		p.logger.Warn("Error "+message, append(logInfo, zap.Error(err))...)
 	}
 }
 
-// Assuming Pod has owner reference of kind Controller
-func (p *CrashLoopBackOffRescheduler) podHasController(pod *v1.Pod) bool {
-	return len(pod.ObjectMeta.OwnerReferences) > 0
-}
-
-func (p *CrashLoopBackOffRescheduler) canRecoverPod(pod *v1.Pod) bool {
-	return pod.ObjectMeta.Annotations[p.filter.annotation] == "true" //TODO: check if it should be True
+func (p *CrashLoopBackOffRescheduler) shouldReschedule(pod *v1.Pod) bool {
+	return pod.ObjectMeta.Annotations[p.filter.annotation] == "true" && // Opted in
+		len(pod.ObjectMeta.OwnerReferences) > 0 && // Assuming Pod has owner reference of kind Controller
+		p.isPodUnhealthy(pod)
 }
 
 func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
-	p.logger.Info("getCrashLoopBackOffPods: START")
-	allPods, err := p.client.GetPods(p.filter.namespace)
+	pods, err := p.client.GetPods(p.filter.namespace)
 	if err != nil {
 		p.logger.Error("Error getting pod list: ", zap.Error(err))
 		return &[]v1.Pod{}
 	}
-	unhealthyPods := &v1.PodList{}
-	for _, pod := range allPods.Items {
-		if p.isPodUnhealthy(&pod) == true {
-			p.logger.Infof("Pod (%v) in namespace (%v) is unhealthy",
-				pod.ObjectMeta.Name, pod.ObjectMeta.Namespace)
-			unhealthyPods.Items = append(unhealthyPods.Items, pod)
+	var unhealthyPods []v1.Pod
+	for _, pod := range pods.Items {
+		if p.shouldReschedule(&pod) {
+			unhealthyPods = append(unhealthyPods, pod)
 		}
 	}
-	p.logger.Info("getCrashLoopBackOffPods: END")
-	return &unhealthyPods.Items
+	return &unhealthyPods
 }
 
 // This is not 100% reliable because Pod could toggle between Terminated with Error and Waiting with CrashLoopBackOff
 func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 	// Check if any of Containers is in CrashLoop
-	for _, containerStatus := range append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...) {
+	statuses := append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...)
+	for _, containerStatus := range statuses {
 		if containerStatus.RestartCount > p.filter.failureThreshold {
+			// TODO: try removing containerStatus.State.Waiting != nil &&
 			if containerStatus.State.Waiting != nil && containerStatus.State.Waiting.Reason == "CrashLoopBackOff" {
 				return true
 			}
 		}
 	}
-	//TODO: other conditions
 	return false
 }
 
-func NewPodRemediator(logger *zap.SugaredLogger, client *k8s.Client) (*CrashLoopBackOffRescheduler, error) {
-	viper.SetConfigFile("config/pod_remediator.json")
+// TODO: make a config object and read it directly via standard json serializer
+func NewCrashLoopBackOffRescheduler(logger *zap.Logger, client *k8s.Client) (*CrashLoopBackOffRescheduler, error) {
+	file := "config/crash_loop_back_off_rescheduler.json"
+	logger.Info("Reading config", zap.String("file", file))
+	viper.SetConfigFile(file)
 	viper.SetConfigType("json")
-	logger.Infof("Reading config from %v", viper.ConfigFileUsed())
-	filter := PodFilter{
-		annotation:       "kube_remediator/restart_unhealthy",
-		failureThreshold: 5,
-		namespace:        "",
-	}
+
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Error("Failed to read config file", zap.Error(err))
-	} else {
-		logger.Infof("Config: %v", viper.AllSettings())
-		filter = PodFilter{
-			annotation:       viper.GetString("annotation"),
-			failureThreshold: viper.GetInt32("failureThreshold"),
-			namespace:        viper.GetString("namespace"),
-		}
+		return nil, err
+	}
+
+	logger.Sugar().Infof("Config %v", viper.AllSettings()) // TODO: prefer using zap.Map or something like that
+	filter := PodFilter{
+		annotation:       viper.GetString("annotation"),
+		failureThreshold: viper.GetInt32("failureThreshold"),
+		namespace:        viper.GetString("namespace"),
 	}
 
 	p := &CrashLoopBackOffRescheduler{
-		client:    client,
-		logger:    logger,
-		frequency: viper.GetDuration("frequency"),
-		filter:    filter,
+		client:   client,
+		logger:   logger,
+		interval: viper.GetDuration("interval"),
+		filter:   filter,
 	}
 	return p, nil
 }
