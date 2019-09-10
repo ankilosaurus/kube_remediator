@@ -4,7 +4,7 @@ import (
 	"flag"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
-	v1beta1 "k8s.io/api/policy/v1beta1"
+	"k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -12,11 +12,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 type Client struct {
-	logger    *zap.SugaredLogger
+	logger    *zap.Logger
 	clientSet *kubernetes.Clientset
 }
 
@@ -26,17 +25,6 @@ func (c *Client) GetPods(namespace string) (*apiv1.PodList, error) {
 
 func (c *Client) DeletePod(pod *apiv1.Pod) error {
 	return c.clientSet.CoreV1().Pods(pod.ObjectMeta.Namespace).Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{})
-}
-
-func (c *Client) RecreatePod(pod *apiv1.Pod) error {
-	if err := c.DeletePod(pod); err != nil {
-		return err
-	}
-	// TODO: recreation in seperate go routine
-	time.Sleep(10 * time.Second)
-	c.prepareToApply(pod)
-	_, err := c.clientSet.CoreV1().Pods(pod.ObjectMeta.Namespace).Create(pod)
-	return err
 }
 
 func (c *Client) GetPodDisruptionBudget(name string, namespace string) (*v1beta1.PodDisruptionBudget, error) {
@@ -54,7 +42,7 @@ func (c *Client) prepareToApply(pod *apiv1.Pod) {
 	pod.Status = apiv1.PodStatus{}
 }
 
-func NewClient(logger *zap.SugaredLogger) (*Client, error) {
+func NewClient(logger *zap.Logger) (*Client, error) {
 	var err error
 	var config *restclient.Config
 	if os.Getenv("KUBERNETES_SERVICE_HOST") == "" {
