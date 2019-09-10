@@ -80,7 +80,7 @@ func HealthCheck(ctx context.Context, wg *sync.WaitGroup, logger *zap.Logger) {
 	//register handler
 	mux := http.NewServeMux()
 	healthz.RegisterHandler(mux)
-	srv := &http.Server{Addr: "localhost:8080", Handler: mux}
+	srv := &http.Server{Addr: ":8080", Handler: mux}
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
