@@ -31,6 +31,8 @@ Deletes left behind PersistentVolumeClaims
 Why:
 - When Statefulset gets deleted, associated PersistentVolumeClaims are not automatically deleted
 
+## Configuration
+Default configuration is provided under `config/*`.
 
 ## Development
 
