@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+var CONFIG_FILE = "config/crash_loop_back_off_rescheduler.json"
+
 type PodFilter struct {
 	annotation       string
 	failureThreshold int32
@@ -17,15 +19,21 @@ type PodFilter struct {
 }
 
 type CrashLoopBackOffRescheduler struct {
-	client   *k8s.Client
+	client   k8s.ClientInterface
 	logger   *zap.Logger
 	interval time.Duration
 	filter   PodFilter
 }
 
+func waitDone(wg *sync.WaitGroup) {
+	if wg != nil {
+		wg.Done()
+	}
+}
+
 // Entrypoint
 func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
-	defer wg.Done()
+	defer waitDone(wg)
 
 	ticker := time.NewTicker(p.interval)
 	defer ticker.Stop()
@@ -67,12 +75,6 @@ func (p *CrashLoopBackOffRescheduler) tryWithLogging(message string, logInfo []z
 	}
 }
 
-func (p *CrashLoopBackOffRescheduler) shouldReschedule(pod *v1.Pod) bool {
-	return (p.filter.annotation == "" || pod.ObjectMeta.Annotations[p.filter.annotation] == "true") && // Opted in
-		len(pod.ObjectMeta.OwnerReferences) > 0 && // Assuming Pod has owner reference of kind Controller
-		p.isPodUnhealthy(pod)
-}
-
 func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 	pods, err := p.client.GetPods(p.filter.namespace)
 	if err != nil {
@@ -88,13 +90,18 @@ func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 	return &unhealthyPods
 }
 
+func (p *CrashLoopBackOffRescheduler) shouldReschedule(pod *v1.Pod) bool {
+	return (p.filter.annotation == "" || pod.ObjectMeta.Annotations[p.filter.annotation] == "true") && // Opted in
+		len(pod.ObjectMeta.OwnerReferences) > 0 && // Assuming Pod has owner reference of kind Controller
+		p.isPodUnhealthy(pod)
+}
+
 // This is not 100% reliable because Pod could toggle between Terminated with Error and Waiting with CrashLoopBackOff
 func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 	// Check if any of Containers is in CrashLoop
 	statuses := append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...)
 	for _, containerStatus := range statuses {
 		if containerStatus.RestartCount > p.filter.failureThreshold {
-			// TODO: try removing containerStatus.State.Waiting != nil &&
 			if containerStatus.State.Waiting != nil && containerStatus.State.Waiting.Reason == "CrashLoopBackOff" {
 				return true
 			}
@@ -104,14 +111,17 @@ func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 }
 
 // TODO: make a config object and read it directly via standard json serializer
-func NewCrashLoopBackOffRescheduler(logger *zap.Logger, client *k8s.Client) (*CrashLoopBackOffRescheduler, error) {
-	file := "config/crash_loop_back_off_rescheduler.json"
-	logger.Info("Reading config", zap.String("file", file))
-	viper.SetConfigFile(file)
+func NewCrashLoopBackOffRescheduler(logger *zap.Logger, client k8s.ClientInterface) (*CrashLoopBackOffRescheduler, error) {
+	logger.Info("Reading config", zap.String("file", CONFIG_FILE))
+	viper.SetConfigFile(CONFIG_FILE)
 	viper.SetConfigType("json")
+	viper.SetDefault("annotation", "kube-remediator/CrashLoopBackOffRemediator")
+	viper.SetDefault("failureThreshold", 5)
+	viper.SetDefault("namespace", "")
+	viper.SetDefault("interval", "1m")
 
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
+		logger.Warn("Error reading config:", zap.Error(err))
 	}
 
 	logger.Sugar().Infof("Config %v", viper.AllSettings()) // TODO: prefer using zap.Map or something like that
