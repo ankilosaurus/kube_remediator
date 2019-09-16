@@ -1,6 +1,6 @@
 {
-    "interval": "10s",
-    "failureThreshold": 2,
+    "interval": "1m",
+    "failureThreshold": 5,
     "annotation" : "kube-remediator/CrashLoopBackOffRemediator",
     "namespace": ""
 }
