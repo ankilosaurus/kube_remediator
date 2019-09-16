@@ -3,6 +3,7 @@ package remediator
 import (
 	"context"
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
+	"github.com/aksgithub/kube_remediator/pkg/metrics"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
@@ -23,6 +24,13 @@ type CrashLoopBackOffRescheduler struct {
 	logger   *zap.Logger
 	interval time.Duration
 	filter   PodFilter
+	metrics  *metrics.CrashLoopBackOff_Metrics
+}
+
+func waitDone(wg *sync.WaitGroup) {
+	if wg != nil {
+		wg.Done()
+	}
 }
 
 func waitDone(wg *sync.WaitGroup) {
@@ -63,6 +71,7 @@ func (p *CrashLoopBackOffRescheduler) reschedulePods() {
 			zap.String("namespace", pod.ObjectMeta.Namespace),
 		}
 		p.tryWithLogging("Deleting Pod", podInfo, func() error {
+			p.metrics.UpdateRescheduledCount()
 			return p.client.DeletePod(&pod)
 		})
 	}
@@ -111,7 +120,9 @@ func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 }
 
 // TODO: make a config object and read it directly via standard json serializer
-func NewCrashLoopBackOffRescheduler(logger *zap.Logger, client k8s.ClientInterface) (*CrashLoopBackOffRescheduler, error) {
+func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
+	                                client k8s.ClientInterface,
+	                                metrics *metrics.CrashLoopBackOff_Metrics) (*CrashLoopBackOffRescheduler, error) {
 	logger.Info("Reading config", zap.String("file", CONFIG_FILE))
 	viper.SetConfigFile(CONFIG_FILE)
 	viper.SetConfigType("json")
@@ -136,6 +147,7 @@ func NewCrashLoopBackOffRescheduler(logger *zap.Logger, client k8s.ClientInterfa
 		logger:   logger,
 		interval: viper.GetDuration("interval"),
 		filter:   filter,
+		metrics:  metrics,
 	}
 	return p, nil
 }

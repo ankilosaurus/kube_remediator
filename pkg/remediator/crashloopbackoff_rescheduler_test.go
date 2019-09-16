@@ -3,6 +3,7 @@ package remediator_test
 import (
 	"context"
 	"github.com/aksgithub/kube_remediator/pkg/k8s/mock"
+	"github.com/aksgithub/kube_remediator/pkg/metrics"
 	"github.com/aksgithub/kube_remediator/pkg/remediator"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -10,18 +11,25 @@ import (
 	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"testing"
 )
 
 type TestCrashLoopBackOffReschedulerSuite struct {
 	suite.Suite
 	ctx            context.Context
+<<<<<<< HEAD
+=======
 	t              *testing.T
+>>>>>>> 054422e... unit-test crashloopbackoff_rescheduler
 	logger         *zap.Logger
 	mockController *gomock.Controller
 	mockClient     *mock_k8s.MockClientInterface
 	pods           []corev1.Pod
+<<<<<<< HEAD
+	remediator     *remediator.CrashLoopBackOffRescheduler
+	t              *testing.T
+=======
+>>>>>>> 054422e... unit-test crashloopbackoff_rescheduler
 }
 
 func (suite *TestCrashLoopBackOffReschedulerSuite) SetupSuite() {
@@ -29,12 +37,31 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) SetupSuite() {
 	loggerConfig.EncoderConfig.TimeKey = ""
 	loggerConfig.EncoderConfig.MessageKey = "message"
 	logger, err := loggerConfig.Build()
+<<<<<<< HEAD
+	assert.Equal(suite.t, err, nil)
+=======
 	runtime.Must(err)
+>>>>>>> 054422e... unit-test crashloopbackoff_rescheduler
 
 	suite.ctx = context.Background()
 	suite.logger = logger
 	suite.mockController = gomock.NewController(suite.t)
 	suite.mockClient = mock_k8s.NewMockClientInterface(suite.mockController)
+<<<<<<< HEAD
+
+	suite.remediator, err = suite.testGetRemediator()
+	assert.Equal(suite.t, err, nil)
+	assert.Assert(suite.t, suite.remediator != nil)
+}
+
+func (suite *TestCrashLoopBackOffReschedulerSuite) testGetRemediator() (*remediator.CrashLoopBackOffRescheduler, error) {
+	remediator.CONFIG_FILE = "../../config/crash_loop_back_off_rescheduler.json"
+	cm := metrics.NewCrashLoopBackOffMetrics(suite.logger)
+	cm.RegisterMetrics()
+	remediator, err := remediator.NewCrashLoopBackOffRescheduler(suite.logger, suite.mockClient, cm)
+	return remediator, err
+=======
+>>>>>>> 054422e... unit-test crashloopbackoff_rescheduler
 }
 
 func (suite *TestCrashLoopBackOffReschedulerSuite) SetupTest() {
@@ -114,6 +141,11 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) SetupTest() {
 }
 
 func (suite *TestCrashLoopBackOffReschedulerSuite) testRemediator() {
+<<<<<<< HEAD
+	ctx, cancel := context.WithCancel(suite.ctx)
+	cancel() // cancel first so we can just run once and exit
+	suite.remediator.Run(ctx, nil)
+=======
 	remediator, err := suite.testGetRemediator()
 	assert.Equal(suite.t, err, nil)
 	assert.Assert(suite.t, remediator != nil)
@@ -127,6 +159,7 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) testGetRemediator() (*remedia
 	remediator.CONFIG_FILE = "../../config/crash_loop_back_off_rescheduler.json"
 	remediator, err := remediator.NewCrashLoopBackOffRescheduler(suite.logger, suite.mockClient)
 	return remediator, err
+>>>>>>> 054422e... unit-test crashloopbackoff_rescheduler
 }
 
 // Restart only Unhealthy Pod
