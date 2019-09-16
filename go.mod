@@ -10,6 +10,7 @@ require (
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/magiconair/properties v1.8.0
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/prometheus/client_golang v0.9.3
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.3.0
 	go.uber.org/zap v1.10.0

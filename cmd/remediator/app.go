@@ -2,18 +2,16 @@ package main
 
 import (
 	"context"
-	"net/http"
+	"github.com/aksgithub/kube_remediator/pkg/http"
+	"github.com/aksgithub/kube_remediator/pkg/k8s"
+	"github.com/aksgithub/kube_remediator/pkg/metrics"
+	"github.com/aksgithub/kube_remediator/pkg/remediator"
+	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
-
-	"github.com/aksgithub/kube_remediator/pkg/healthz"
-	"github.com/aksgithub/kube_remediator/pkg/k8s"
-	"github.com/aksgithub/kube_remediator/pkg/remediator"
-	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
 // catch interrupts to gracefully exit since otherwise goroutines get killed without running defer
@@ -50,11 +48,14 @@ func main() {
 	k8sClient, err := k8s.NewClient(logger)
 	runtime.Must(err)
 
+	cm := metrics.NewCrashLoopBackOffMetrics(logger)
+	cm.RegisterMetrics()
+
 	wg.Add(1)
 	go signalHandler(cancel, &wg, logger)
 
 	// init remediators
-	remediator, err := remediator.NewCrashLoopBackOffRescheduler(logger, k8sClient)
+	remediator, err := remediator.NewCrashLoopBackOffRescheduler(logger, k8sClient, cm)
 	if err != nil {
 		logger.Panic("Error initializing CrashLoopBackOffRescheduler", zap.Error(err))
 	}
@@ -63,34 +64,7 @@ func main() {
 	go remediator.Run(ctx, &wg)
 
 	wg.Add(1)
-	go HealthCheck(ctx, &wg, logger)
+	go http.NewServer(logger).Serve(ctx, &wg)
 
 	wg.Wait()
-}
-
-// allow checking from the outside if the app is still running
-// eventually this should show if the remediators are working
-// maybe later also for /metrics
-// TODO: own file with own class and same Run interface
-func HealthCheck(ctx context.Context, wg *sync.WaitGroup, logger *zap.Logger) {
-	defer wg.Done()
-
-	logger.Info("Starting")
-
-	//register handler
-	mux := http.NewServeMux()
-	healthz.RegisterHandler(mux)
-	srv := &http.Server{Addr: ":8080", Handler: mux}
-
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			logger.Error("Error listening", zap.Error(err))
-		}
-	}()
-	<-ctx.Done()
-	logger.Info("Stopping", zap.String("reason", "Signal"))
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	srv.Shutdown(shutdownCtx)
 }
