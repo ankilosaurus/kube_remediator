@@ -33,12 +33,6 @@ func waitDone(wg *sync.WaitGroup) {
 	}
 }
 
-func waitDone(wg *sync.WaitGroup) {
-	if wg != nil {
-		wg.Done()
-	}
-}
-
 // Entrypoint
 func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer waitDone(wg)
@@ -121,8 +115,8 @@ func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 
 // TODO: make a config object and read it directly via standard json serializer
 func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
-	                                client k8s.ClientInterface,
-	                                metrics *metrics.CrashLoopBackOff_Metrics) (*CrashLoopBackOffRescheduler, error) {
+	client k8s.ClientInterface,
+	metrics *metrics.CrashLoopBackOff_Metrics) (*CrashLoopBackOffRescheduler, error) {
 	logger.Info("Reading config", zap.String("file", CONFIG_FILE))
 	viper.SetConfigFile(CONFIG_FILE)
 	viper.SetConfigType("json")
