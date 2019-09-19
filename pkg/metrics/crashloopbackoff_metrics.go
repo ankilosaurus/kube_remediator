@@ -16,7 +16,6 @@ func NewCrashLoopBackOffMetrics(logger *zap.Logger) *CrashLoopBackOff_Metrics {
 }
 
 func (c *CrashLoopBackOff_Metrics) RegisterMetrics() {
-	//TODO:
 	c.podsCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "crashloopbackoff_pods_rescheduled",
@@ -30,4 +29,3 @@ func (c *CrashLoopBackOff_Metrics) RegisterMetrics() {
 func (c *CrashLoopBackOff_Metrics) UpdateRescheduledCount() {
 	c.podsCount.With(prometheus.Labels{"action": "rescheduled"}).Inc()
 }
-
