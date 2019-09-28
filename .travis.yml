@@ -5,5 +5,8 @@ branches:
 go: "1.12"
 env:
 - GO111MODULE=on
-# NOTE: `go fmt` does not work, see https://go-review.googlesource.com/c/go/+/153459/
-script: go build cmd/remediator/app.go && [ -z "`ls */**/*.go | xargs -n1 go fmt`" ]
+script: |
+  set -ex
+  go build -o .build/remediator cmd/remediator/app.go
+  go fmt ./... && git diff --exit-code
+  go mod tidy && git diff --exit-code
