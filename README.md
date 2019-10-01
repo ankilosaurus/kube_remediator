@@ -3,36 +3,42 @@
 ![Kube Remediator Logo ](logo/logo.png)
 
 
-## List
+## Remediators
 - [Reschedules Pods in CrashLoopBackOff](#crashloopbackoff-rescheduler)
 - [Deletes unbound PVCs](#unbound-persistentvolumeclaim-cleaner)
 
+
 ### [CrashLoopBackOff Rescheduler](pkg/remediator/crash_loop_back_off_rescheduler.go)
 
-Reschedules Pods in CrashLoopBackOff
+Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale init-container/sidecar/configmap 
+
 - Runs every 1m (`interval` config)
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (`failureThreshold` config)
 - Ignores Pods without annotation `kube-remediator/CrashLoopBackOffRemediator` (`annotation` config, use `""` to manage all pods )
 - Can work in a single namespace, default is all namespaces `""` (`namespace` config)
 - Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back)
 
-Why:
-- node issues
-- stale init-container/sidecar
-
 
 ### Unbound PersistentVolumeClaim cleaner
 
-Deletes left behind PersistentVolumeClaims
+Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are not automatically cleanup up otherwise
+
 - Waits for 7 days(configurable) before deleting
 - Ignores if `PersistentVolume` has `persistentVolumeReclaimPolicy` set to `Retain`
 
 
-Why:
-- When Statefulset gets deleted, associated PersistentVolumeClaims are not automatically deleted
+## Deploy
 
-## Configuration
-Default configuration is provided under `config/*`.
+```bash
+kubectl apply -f kubernetes/rbac.yaml
+kubectl apply -f kubernetes/app-server.yml
+```
+
+Configuration options:
+- Deploy provided image to use defaults under `config/*`
+- Make a new image `FROM` the provided image and add/remove `config/*`
+- Overwrite `config/*` with a mounted `ConfigMap`
+
 
 ## Development
 
@@ -45,13 +51,3 @@ go build -o .build/remediator cmd/remediator/app.go
 # test remediators
 kubectl apply -f kubernetes/crashloop_pod.yml
 ```
-
-
-## Deploy
-
-```bash
-kubectl apply -f kubernetes/rbac.yaml
-kubectl apply -f kubernetes/app-server.yml
-```
-
-
