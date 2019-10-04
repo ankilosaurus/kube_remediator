@@ -31,7 +31,7 @@ func (c *Client) DeletePod(pod *apiv1.Pod) error {
 	return c.clientSet.CoreV1().Pods(pod.ObjectMeta.Namespace).Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{})
 }
 
-func NewClient(logger *zap.Logger) (*Client, error) {
+func newClientSet() (*kubernetes.Clientset, error) {
 	var err error
 	var config *restclient.Config
 	if os.Getenv("KUBERNETES_SERVICE_HOST") == "" {
@@ -44,13 +44,19 @@ func NewClient(logger *zap.Logger) (*Client, error) {
 		// Reads config when in cluster
 		config, err = rest.InClusterConfig()
 	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	clientSet, err := kubernetes.NewForConfig(config)
+	return kubernetes.NewForConfig(config)
+}
+
+func NewClient(logger *zap.Logger) (*Client, error) {
+	clientSet, err := newClientSet()
 	if err != nil {
 		return nil, err
 	}
+
 	return &Client{clientSet: clientSet, logger: logger}, err
 }
