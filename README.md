@@ -12,7 +12,7 @@
 
 Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale init-container/sidecar/configmap 
 
-- Runs every 1m (`interval` config)
+- Listens to Pod update events
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (`failureThreshold` config)
 - Ignores Pods without annotation `kube-remediator/CrashLoopBackOffRemediator` (`annotation` config, use `""` to manage all pods )
 - Can work in a single namespace, default is all namespaces `""` (`namespace` config)

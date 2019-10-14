@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/aksgithub/kube_remediator/pkg/http"
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
-	"github.com/aksgithub/kube_remediator/pkg/metrics"
 	"github.com/aksgithub/kube_remediator/pkg/remediator"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -48,14 +47,11 @@ func main() {
 	k8sClient, err := k8s.NewClient(logger)
 	runtime.Must(err)
 
-	cm := metrics.NewCrashLoopBackOffMetrics(logger)
-	cm.RegisterMetrics()
-
 	wg.Add(1)
 	go signalHandler(cancel, &wg, logger)
 
 	// init remediators
-	remediator, err := remediator.NewCrashLoopBackOffRescheduler(logger, k8sClient, cm)
+	remediator, err := remediator.NewCrashLoopBackOffRescheduler(logger, k8sClient)
 	if err != nil {
 		logger.Panic("Error initializing CrashLoopBackOffRescheduler", zap.Error(err))
 	}
