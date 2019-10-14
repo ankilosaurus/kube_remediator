@@ -56,7 +56,7 @@ func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGrou
 func (p *CrashLoopBackOffRescheduler) reschedulePods() {
 	p.logger.Info("Running")
 	for _, pod := range *p.getCrashLoopBackOffPods() {
-		p.reschedulePod(nil, pod)
+		p.reschedulePod(nil, &pod)
 	}
 }
 

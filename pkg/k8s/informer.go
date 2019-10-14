@@ -11,6 +11,7 @@ func NewSharedInformerFactory(logger *zap.Logger, ns string) (informers.SharedIn
 		logger.Warn("Error initializing informer:", zap.Error(err))
 		return nil, err
 	}
-	factory := informers.NewSharedInformerFactoryWithOptions(clientSet, 0, informers.WithNamespace(ns), nil)
+
+	factory := informers.NewSharedInformerFactoryWithOptions(clientSet, 0, informers.WithNamespace(ns))
 	return factory, nil
 }
