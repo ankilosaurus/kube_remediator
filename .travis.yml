@@ -5,8 +5,4 @@ branches:
 go: "1.12"
 env:
 - GO111MODULE=on
-script: |
-  set -ex
-  go build -o .build/remediator cmd/remediator/app.go
-  go fmt ./... && git diff --exit-code
-  go mod tidy && git diff --exit-code
+script: make test
