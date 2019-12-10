@@ -1,7 +1,6 @@
 package k8s
 
 import (
-	"flag"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,11 +34,11 @@ func newClientSet() (*kubernetes.Clientset, error) {
 	var err error
 	var config *restclient.Config
 	if os.Getenv("KUBERNETES_SERVICE_HOST") == "" {
-		// Read kubeconfig flag from command line
-		kubeconfig := flag.String("kubeconfig", filepath.Join(os.Getenv("HOME"), ".kube", "config"), "")
-		flag.Parse()
-		config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
-
+		kubeconfig := os.Getenv("KUBECONFIG")
+		if kubeconfig == "" {
+			kubeconfig = filepath.Join(os.Getenv("HOME"), ".kube", "config")
+		}
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	} else {
 		// Reads config when in cluster
 		config, err = rest.InClusterConfig()
