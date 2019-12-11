@@ -14,7 +14,7 @@ import (
 )
 
 type ClientInterface interface {
-	GetPods(namespace string) (*apiv1.PodList, error)
+	GetPods(namespace string, options metav1.ListOptions) (*apiv1.PodList, error)
 	DeletePod(pod *apiv1.Pod) error
 	NewSharedInformerFactory(ns string) (informers.SharedInformerFactory, error)
 }
@@ -24,8 +24,8 @@ type Client struct {
 	clientSet *kubernetes.Clientset
 }
 
-func (c *Client) GetPods(namespace string) (*apiv1.PodList, error) {
-	return c.clientSet.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+func (c *Client) GetPods(namespace string, options metav1.ListOptions) (*apiv1.PodList, error) {
+	return c.clientSet.CoreV1().Pods(namespace).List(options)
 }
 
 func (c *Client) DeletePod(pod *apiv1.Pod) error {

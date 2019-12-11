@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 	"sync"
@@ -23,10 +24,9 @@ type PodFilter struct {
 }
 
 type CrashLoopBackOffRescheduler struct {
-	client          k8s.ClientInterface
+	Base
 	filter          PodFilter
 	informerFactory informers.SharedInformerFactory
-	logger          *zap.Logger
 	metrics         *metrics.CrashLoopBackOff_Metrics
 }
 
@@ -41,7 +41,7 @@ func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGrou
 	informer := p.informerFactory.Core().V1().Pods().Informer()
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: p.reschedulePod,
+		UpdateFunc: p.rescheduleIfNecessary,
 	})
 	informer.Run(ctx.Done())
 
@@ -53,34 +53,19 @@ func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGrou
 func (p *CrashLoopBackOffRescheduler) reschedulePods() {
 	p.logger.Info("Running")
 	for _, pod := range *p.getCrashLoopBackOffPods() {
-		p.reschedulePod(nil, &pod)
+		p.rescheduleIfNecessary(nil, &pod)
 	}
 }
 
-func (p *CrashLoopBackOffRescheduler) reschedulePod(oldObj, newObj interface{}) {
+func (p *CrashLoopBackOffRescheduler) rescheduleIfNecessary(oldObj, newObj interface{}) {
 	pod := newObj.(*v1.Pod)
-	podInfo := []zap.Field{
-		zap.String("name", pod.ObjectMeta.Name),
-		zap.String("namespace", pod.ObjectMeta.Namespace),
-	}
-
 	if p.shouldReschedule(pod) {
-		p.tryWithLogging("Deleting Pod", podInfo, func() error {
-			p.metrics.UpdateRescheduledCount()
-			return p.client.DeletePod(pod)
-		})
-	}
-}
-
-func (p *CrashLoopBackOffRescheduler) tryWithLogging(message string, logInfo []zap.Field, fn func() error) {
-	p.logger.Info(message, logInfo...)
-	if err := fn(); err != nil {
-		p.logger.Warn("Error "+message, append(logInfo, zap.Error(err))...)
+		p.deletePod(*pod)
 	}
 }
 
 func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
-	pods, err := p.client.GetPods(p.filter.namespace)
+	pods, err := p.client.GetPods(p.filter.namespace, metav1.ListOptions{})
 	if err != nil {
 		p.logger.Error("Error getting pod list: ", zap.Error(err))
 		return &[]v1.Pod{}
@@ -143,11 +128,11 @@ func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
 		return nil, err // untested section
 	}
 	p := &CrashLoopBackOffRescheduler{
-		client:          client,
-		logger:          logger,
 		informerFactory: informerFactory,
 		filter:          filter,
 		metrics:         metrics,
 	}
+	p.logger = logger
+	p.client = client
 	return p, nil
 }
