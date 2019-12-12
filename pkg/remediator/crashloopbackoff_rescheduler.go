@@ -50,6 +50,7 @@ func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGrou
 	informer.Run(ctx.Done())
 
 	<-ctx.Done()
+	p.metrics.UnRegister()
 	p.logger.Info("Stopping", zap.String("reason", "Signal"))
 }
 
@@ -139,7 +140,7 @@ func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
 	}
 
 	metrics := metrics.NewCrashLoopBackOffMetrics(logger)
-	metrics.RegisterMetrics()
+	metrics.Register()
 
 	informerFactory, err := k8s.NewSharedInformerFactory(logger, filter.namespace)
 	if err != nil {

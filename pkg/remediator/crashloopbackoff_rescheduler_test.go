@@ -20,7 +20,6 @@ type TestCrashLoopBackOffReschedulerSuite struct {
 	mockController *gomock.Controller
 	mockClient     *mock_k8s.MockClientInterface
 	pods           []corev1.Pod
-	remediator     *remediator.CrashLoopBackOffRescheduler
 	t              *testing.T
 }
 
@@ -35,10 +34,6 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) SetupSuite() {
 	suite.logger = logger
 	suite.mockController = gomock.NewController(suite.t)
 	suite.mockClient = mock_k8s.NewMockClientInterface(suite.mockController)
-
-	suite.remediator, err = suite.testGetRemediator()
-	assert.Equal(suite.t, err, nil)
-	assert.Assert(suite.t, suite.remediator != nil)
 }
 
 func (suite *TestCrashLoopBackOffReschedulerSuite) testGetRemediator() (*remediator.CrashLoopBackOffRescheduler, error) {
@@ -126,7 +121,11 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) SetupTest() {
 func (suite *TestCrashLoopBackOffReschedulerSuite) testRemediator() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel first so we can just run once and exit
-	suite.remediator.Run(ctx, nil)
+
+	crashLoopRemediator, err := suite.testGetRemediator()
+	assert.Equal(suite.t, err, nil)
+	assert.Assert(suite.t, crashLoopRemediator != nil)
+	crashLoopRemediator.Run(ctx, nil)
 }
 
 // Restart only Unhealthy Pod
