@@ -124,14 +124,14 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) testRemediator() {
 	ctx, cancel := context.WithCancel(suite.ctx)
 	cancel() // cancel first so we can just run once and exit
 
-	suite.mockClient.EXPECT().NewSharedInformerFactory("").Return(suite.testGetInformerFactory(), nil).Times(1)
+	suite.mockClient.EXPECT().NewSharedInformerFactory("").Return(suite.newInformerFactory(), nil).Times(1)
 	crashLoopRemediator, err := suite.testGetRemediator()
 	assert.Equal(suite.t, err, nil)
 	assert.Assert(suite.t, crashLoopRemediator != nil)
 	crashLoopRemediator.Run(ctx, nil)
 }
 
-func (suite *TestCrashLoopBackOffReschedulerSuite) testGetInformerFactory() informers.SharedInformerFactory {
+func (suite *TestCrashLoopBackOffReschedulerSuite) newInformerFactory() informers.SharedInformerFactory {
 	return informers.NewSharedInformerFactoryWithOptions(fake.NewSimpleClientset(), 0, informers.WithNamespace(""))
 }
 
