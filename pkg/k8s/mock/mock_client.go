@@ -7,6 +7,7 @@ package mock_k8s
 import (
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
+	informers "k8s.io/client-go/informers"
 	reflect "reflect"
 )
 
@@ -60,4 +61,19 @@ func (m *MockClientInterface) DeletePod(pod *v1.Pod) error {
 func (mr *MockClientInterfaceMockRecorder) DeletePod(pod interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePod", reflect.TypeOf((*MockClientInterface)(nil).DeletePod), pod)
+}
+
+// NewSharedInformerFactory mocks base method
+func (m *MockClientInterface) NewSharedInformerFactory(ns string) (informers.SharedInformerFactory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewSharedInformerFactory", ns)
+	ret0, _ := ret[0].(informers.SharedInformerFactory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NewSharedInformerFactory indicates an expected call of NewSharedInformerFactory
+func (mr *MockClientInterfaceMockRecorder) NewSharedInformerFactory(ns interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewSharedInformerFactory", reflect.TypeOf((*MockClientInterface)(nil).NewSharedInformerFactory), ns)
 }

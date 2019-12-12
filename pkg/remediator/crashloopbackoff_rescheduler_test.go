@@ -10,6 +10,8 @@ import (
 	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes/fake"
 	"testing"
 )
 
@@ -122,17 +124,21 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) testRemediator() {
 	ctx, cancel := context.WithCancel(suite.ctx)
 	cancel() // cancel first so we can just run once and exit
 
+	suite.mockClient.EXPECT().NewSharedInformerFactory("").Return(suite.testGetInformerFactory(), nil).Times(1)
 	crashLoopRemediator, err := suite.testGetRemediator()
 	assert.Equal(suite.t, err, nil)
 	assert.Assert(suite.t, crashLoopRemediator != nil)
 	crashLoopRemediator.Run(ctx, nil)
 }
 
+func (suite *TestCrashLoopBackOffReschedulerSuite) testGetInformerFactory() informers.SharedInformerFactory {
+	return informers.NewSharedInformerFactoryWithOptions(fake.NewSimpleClientset(), 0, informers.WithNamespace(""))
+}
+
 // Restart only Unhealthy Pod
 func (suite *TestCrashLoopBackOffReschedulerSuite) TestReschedulePods() {
 	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
 	suite.mockClient.EXPECT().DeletePod(&suite.pods[1]).Return(nil).Times(1)
-
 	suite.testRemediator()
 }
 
