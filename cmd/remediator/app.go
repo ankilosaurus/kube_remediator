@@ -16,6 +16,7 @@ import (
 // catch interrupts to gracefully exit since otherwise goroutines get killed without running defer
 // TODO: is there no better way of doing this ?
 func signalHandler(cancelFn func(), wg *sync.WaitGroup, logger *zap.Logger) {
+	defer cancelFn()
 	defer wg.Done()
 	c := make(chan os.Signal, 1)
 	signal.Notify(c,
@@ -27,13 +28,10 @@ func signalHandler(cancelFn func(), wg *sync.WaitGroup, logger *zap.Logger) {
 		syscall.SIGFPE)
 	signal := <-c
 	logger.Sugar().Warnf("Signal %v Received, Shutting Down", signal) // TODO: prefer structured logging
-	cancelFn()
 }
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	var wg sync.WaitGroup
 
 	// build a logger without timestamps because docker already logs with timestamps / use "message"
@@ -62,5 +60,6 @@ func main() {
 	wg.Add(1)
 	go http.NewServer(logger).Serve(ctx, &wg)
 
+	<-ctx.Done()
 	wg.Wait()
 }
