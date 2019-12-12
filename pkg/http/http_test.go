@@ -58,8 +58,8 @@ func (suite *TestHttpServerSuite) TestServer() {
 	wg.Add(1)
 	go remediator_http.NewServer(suite.logger).Serve(ctx, &wg)
 
-	// wait for http server to get ready
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond) // wait for http server to get ready
+
 	status, _ := suite.httpGet("http://localhost:8080/healthz")
 	assert.Equal(suite.t, status, 200)
 	status, _ = suite.httpGet("http://localhost:8080/metrics")
