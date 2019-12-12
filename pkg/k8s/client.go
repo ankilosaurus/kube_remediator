@@ -4,6 +4,7 @@ import (
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	restclient "k8s.io/client-go/rest"
@@ -15,6 +16,7 @@ import (
 type ClientInterface interface {
 	GetPods(namespace string) (*apiv1.PodList, error)
 	DeletePod(pod *apiv1.Pod) error
+	NewSharedInformerFactory(ns string) (informers.SharedInformerFactory, error)
 }
 
 type Client struct {
@@ -28,6 +30,11 @@ func (c *Client) GetPods(namespace string) (*apiv1.PodList, error) {
 
 func (c *Client) DeletePod(pod *apiv1.Pod) error {
 	return c.clientSet.CoreV1().Pods(pod.ObjectMeta.Namespace).Delete(pod.ObjectMeta.Name, &metav1.DeleteOptions{})
+}
+
+func (c *Client) NewSharedInformerFactory(ns string) (informers.SharedInformerFactory, error) {
+	factory := informers.NewSharedInformerFactoryWithOptions(c.clientSet, 0, informers.WithNamespace(ns))
+	return factory, nil
 }
 
 func newClientSet() (*kubernetes.Clientset, error) {

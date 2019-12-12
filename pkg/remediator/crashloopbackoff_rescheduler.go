@@ -142,7 +142,7 @@ func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
 	metrics := metrics.NewCrashLoopBackOffMetrics(logger)
 	metrics.Register()
 
-	informerFactory, err := k8s.NewSharedInformerFactory(logger, filter.namespace)
+	informerFactory, err := client.NewSharedInformerFactory(filter.namespace)
 	if err != nil {
 		return nil, err
 	}
