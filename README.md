@@ -55,8 +55,8 @@ make build
 .build/remediator # run on cluster from $KUBECONFIG (defaults to ~/.kube/config) 
 
 # test CrashLoopBackOffRemediator by seeing if this pod is rescheduled when it crashloops after it's restarted failureThreshold times
-kubectl apply -f kubernetes/crashloop_pod.yml
+kubectl apply -f examples/crashloop_pod.yml
 
 # test OldPodDeleter by seeing if this pod is deleted when it gets old
-kubectl apply -f kubernetes/old_pod.yml
+kubectl apply -f examples/old_pod.yml
 ```
