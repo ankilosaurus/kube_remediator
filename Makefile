@@ -8,5 +8,6 @@ build:
 test: build
 	go fmt ./... && git diff --exit-code
 	go mod tidy && git diff --exit-code
-	go test ./...
+	go get github.com/grosser/go-testcov
+	go-testcov ./...
 

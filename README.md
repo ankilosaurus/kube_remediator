@@ -1,4 +1,4 @@
-# Kube Remediator
+# Kube Remediator [![Build Status](https://travis-ci.com/aksgithub/kube_remediator.svg)](https://travis-ci.com/aksgithub/kube_remediator) [![coverage](https://img.shields.io/badge/coverage-100%25-success.svg)](https://github.com/aksgithub/kube_remediator)
 
 ![Kube Remediator Logo ](logo/logo.png)
 
@@ -8,7 +8,7 @@
 - [Deletes unbound PVCs](#unbound-persistentvolumeclaim-cleaner)
 
 
-### [CrashLoopBackOff Rescheduler](pkg/remediator/crash_loop_back_off_rescheduler.go)
+### [CrashLoopBackOff Rescheduler](pkg/remediator/crashloopbackoffrescheduler.go)
 
 Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale init-container/sidecar/configmap 
 

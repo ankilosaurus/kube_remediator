@@ -26,7 +26,7 @@ func (s *Server) Serve(ctx context.Context, wg *sync.WaitGroup) {
 
 	s.logger.Info("Starting")
 
-	//register sandler
+	//register handler
 	mux := http.NewServeMux()
 	healthz.RegisterHandler(mux)
 	metrics.RegisterHandler(mux)
@@ -34,7 +34,7 @@ func (s *Server) Serve(ctx context.Context, wg *sync.WaitGroup) {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
-			s.logger.Error("Error listening", zap.Error(err))
+			s.logger.Error("Error listening", zap.Error(err)) // untested section
 		}
 	}()
 	<-ctx.Done()
