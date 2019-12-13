@@ -12,6 +12,8 @@ import (
 	"sync"
 )
 
+// TODO: this cannot be global since we have multiple remediator in this package ... folder can be set though but should
+// still not be here
 var CONFIG_FILE = "config/crash_loop_back_off_rescheduler.json"
 
 type PodFilter struct {
@@ -28,15 +30,9 @@ type CrashLoopBackOffRescheduler struct {
 	metrics         *metrics.CrashLoopBackOff_Metrics
 }
 
-func waitDone(wg *sync.WaitGroup) {
-	if wg != nil {
-		wg.Done()
-	}
-}
-
 // Entrypoint
 func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
-	defer waitDone(wg)
+	defer wg.Done()
 
 	p.logger.Info("Starting")
 	// Check for any CrashLoopBackOff Pods first
@@ -129,7 +125,7 @@ func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
 	viper.SetDefault("namespace", "")
 
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Warn("Error reading config:", zap.Error(err))
+		return nil, err // untested section
 	}
 
 	logger.Sugar().Infof("Config %v", viper.AllSettings()) // TODO: prefer using zap.Map or something like that
@@ -144,7 +140,7 @@ func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
 
 	informerFactory, err := client.NewSharedInformerFactory(filter.namespace)
 	if err != nil {
-		return nil, err
+		return nil, err // untested section
 	}
 	p := &CrashLoopBackOffRescheduler{
 		client:          client,
