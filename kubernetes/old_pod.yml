@@ -1,0 +1,13 @@
+# example pod that will stay active for integration test of OldPodDeleter
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "oldpodtest"
+  labels:
+    busybox: "true"
+    kube-remediator/OldPodDeleter: "true"
+spec:
+  containers:
+  - image: busybox
+    name: busybox
+    command: ["sleep", "999"]

@@ -48,14 +48,20 @@ func main() {
 	wg.Add(1)
 	go signalHandler(cancel, &wg, logger)
 
-	// init remediators
-	remediator, err := remediator.NewCrashLoopBackOffRescheduler(logger, k8sClient)
-	if err != nil {
-		logger.Panic("Error initializing CrashLoopBackOffRescheduler", zap.Error(err))
+	remediators := []remediator.BaseIntf{
+		&remediator.OldPodDeleter{},
+		&remediator.CrashLoopBackOffRescheduler{},
 	}
 
-	wg.Add(1)
-	go remediator.Run(ctx, &wg)
+	for _, r := range remediators {
+		err := r.Setup(logger, k8sClient)
+		if err != nil {
+			logger.Panic("Error initializing remediator", zap.String("TODO", "CLASS NAME %t or so"), zap.Error(err))
+		}
+
+		wg.Add(1)
+		go r.Run(ctx, &wg)
+	}
 
 	wg.Add(1)
 	go http.NewServer(logger).Serve(ctx, &wg)

@@ -19,7 +19,12 @@ Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale in
 - Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back)
 
 
-### Unbound PersistentVolumeClaim cleaner
+### [Old Pod Deleter](pkg/remediator/oldpoddeleter.go)
+
+Deletes `Pod`s with label `kube-remediator/OldPodDeleter=true` older than 24h
+
+
+### Unbound PersistentVolumeClaim cleaner TODO
 
 Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are not automatically cleanup up otherwise
 
@@ -51,4 +56,7 @@ make build
 
 # test CrashLoopBackOffRemediator by seeing if this pod is rescheduled when it crashloops after it's restarted failureThreshold times
 kubectl apply -f kubernetes/crashloop_pod.yml
+
+# test OldPodDeleter by seeing if this pod is deleted when it gets old
+kubectl apply -f kubernetes/old_pod.yml
 ```

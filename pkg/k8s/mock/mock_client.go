@@ -7,6 +7,7 @@ package mock_k8s
 import (
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	informers "k8s.io/client-go/informers"
 	reflect "reflect"
 )
@@ -35,7 +36,7 @@ func (m *MockClientInterface) EXPECT() *MockClientInterfaceMockRecorder {
 }
 
 // GetPods mocks base method
-func (m *MockClientInterface) GetPods(namespace string) (*v1.PodList, error) {
+func (m *MockClientInterface) GetPods(namespace string, options metav1.ListOptions) (*v1.PodList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPods", namespace)
 	ret0, _ := ret[0].(*v1.PodList)

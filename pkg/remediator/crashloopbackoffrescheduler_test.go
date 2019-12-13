@@ -86,9 +86,9 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) run() {
 	cancel() // cancel first so we can just run once and exit
 
 	suite.mockClient.EXPECT().NewSharedInformerFactory("").Return(suite.newInformerFactory(), nil)
-	crashloop, err := remediator.NewCrashLoopBackOffRescheduler(suite.logger, suite.mockClient)
+	crashloop := remediator.CrashLoopBackOffRescheduler{}
+	err := crashloop.Setup(suite.logger, suite.mockClient)
 	assert.Equal(suite.t, err, nil)
-	assert.Assert(suite.t, crashloop != nil)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
