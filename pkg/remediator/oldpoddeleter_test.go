@@ -50,7 +50,8 @@ func (suite *TestOldPodDeleterSuite) TeardownTest() {
 }
 
 func (suite *TestOldPodDeleterSuite) run() {
-	oldPodDeleter, err := remediator.NewOldPodDeleter(suite.logger, suite.mockClient)
+	oldPodDeleter := remediator.OldPodDeleter{}
+	err := oldPodDeleter.Setup(suite.logger, suite.mockClient)
 	assert.Equal(suite.t, err, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())

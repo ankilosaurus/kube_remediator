@@ -30,7 +30,40 @@ type CrashLoopBackOffRescheduler struct {
 	metrics         *metrics.CrashLoopBackOff_Metrics
 }
 
-// Entrypoint
+func (p *CrashLoopBackOffRescheduler) Setup(logger *zap.Logger, client k8s.ClientInterface) error {
+	logger.Info("Reading config", zap.String("file", CONFIG_FILE))
+	viper.SetConfigFile(CONFIG_FILE)
+	viper.SetConfigType("json")
+	viper.SetDefault("annotation", "kube-remediator/CrashLoopBackOffRemediator")
+	viper.SetDefault("failureThreshold", 5)
+	viper.SetDefault("namespace", "")
+
+	if err := viper.ReadInConfig(); err != nil {
+		return err // untested section
+	}
+
+	logger.Sugar().Infof("Config %v", viper.AllSettings()) // TODO: prefer using zap.Map or something like that
+	filter := PodFilter{
+		annotation:       viper.GetString("annotation"),
+		failureThreshold: viper.GetInt32("failureThreshold"),
+		namespace:        viper.GetString("namespace"),
+	}
+
+	metrics := metrics.NewCrashLoopBackOffMetrics(logger)
+	metrics.Register()
+
+	informerFactory, err := client.NewSharedInformerFactory(filter.namespace)
+	if err != nil {
+		return err // untested section
+	}
+	p.informerFactory = informerFactory
+	p.filter = filter
+	p.metrics = metrics
+	p.logger = logger
+	p.client = client
+	return nil
+}
+
 func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -97,42 +130,4 @@ func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 		}
 	}
 	return false
-}
-
-// TODO: make a config object and read it directly via standard json serializer
-func NewCrashLoopBackOffRescheduler(logger *zap.Logger,
-	client k8s.ClientInterface) (*CrashLoopBackOffRescheduler, error) {
-	logger.Info("Reading config", zap.String("file", CONFIG_FILE))
-	viper.SetConfigFile(CONFIG_FILE)
-	viper.SetConfigType("json")
-	viper.SetDefault("annotation", "kube-remediator/CrashLoopBackOffRemediator")
-	viper.SetDefault("failureThreshold", 5)
-	viper.SetDefault("namespace", "")
-
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, err // untested section
-	}
-
-	logger.Sugar().Infof("Config %v", viper.AllSettings()) // TODO: prefer using zap.Map or something like that
-	filter := PodFilter{
-		annotation:       viper.GetString("annotation"),
-		failureThreshold: viper.GetInt32("failureThreshold"),
-		namespace:        viper.GetString("namespace"),
-	}
-
-	metrics := metrics.NewCrashLoopBackOffMetrics(logger)
-	metrics.Register()
-
-	informerFactory, err := client.NewSharedInformerFactory(filter.namespace)
-	if err != nil {
-		return nil, err // untested section
-	}
-	p := &CrashLoopBackOffRescheduler{
-		informerFactory: informerFactory,
-		filter:          filter,
-		metrics:         metrics,
-	}
-	p.logger = logger
-	p.client = client
-	return p, nil
 }

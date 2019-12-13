@@ -13,7 +13,6 @@ type OldPodDeleter struct {
 	Base
 }
 
-// Entry point
 func (p *OldPodDeleter) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -58,9 +57,8 @@ func (p *OldPodDeleter) deleteOldPods() {
 	}
 }
 
-func NewOldPodDeleter(logger *zap.Logger, client k8s.ClientInterface) (*OldPodDeleter, error) {
-	p := &OldPodDeleter{}
+func (p *OldPodDeleter) Setup(logger *zap.Logger, client k8s.ClientInterface) error {
 	p.client = client
 	p.logger = logger
-	return p, nil
+	return nil
 }
