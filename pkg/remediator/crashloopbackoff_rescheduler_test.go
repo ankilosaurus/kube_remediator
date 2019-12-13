@@ -101,7 +101,7 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) SetupTest() {
 		Status: corev1.PodStatus{
 			InitContainerStatuses: []corev1.ContainerStatus{
 				corev1.ContainerStatus{
-					RestartCount: 2,
+					RestartCount: 5,
 					State: corev1.ContainerState{
 						Waiting: &corev1.ContainerStateWaiting{Reason: "CrashLoopBackOff"},
 					},
@@ -109,7 +109,7 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) SetupTest() {
 			},
 			ContainerStatuses: []corev1.ContainerStatus{
 				corev1.ContainerStatus{
-					RestartCount: 3,
+					RestartCount: 6,
 					State: corev1.ContainerState{
 						Waiting: &corev1.ContainerStateWaiting{Reason: "CrashLoopBackOff"},
 					},
@@ -146,7 +146,6 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) TestReschedulePods() {
 func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodWithoutOwnerReference() {
 	suite.pods[1].ObjectMeta.OwnerReferences = []metav1.OwnerReference{}
 	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
-	suite.mockClient.EXPECT().DeletePod(&suite.pods[1]).Return(nil).Times(0)
 
 	suite.testRemediator()
 }
@@ -155,7 +154,6 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodWithoutOwnerR
 func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodRestartCount() {
 	suite.pods[1].Status.ContainerStatuses[0].RestartCount = 2
 	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
-	suite.mockClient.EXPECT().DeletePod(&suite.pods[1]).Return(nil).Times(0)
 
 	suite.testRemediator()
 }
@@ -163,7 +161,7 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodRestartCount(
 // Unhealthy Pod has Init container in CrashLoopBackOff
 func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodInitContainerRestartCount() {
 	suite.pods[1].Status.ContainerStatuses[0].RestartCount = 2 // reduce
-	suite.pods[1].Status.InitContainerStatuses[0].RestartCount = 3
+	suite.pods[1].Status.InitContainerStatuses[0].RestartCount = 6
 	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
 	suite.mockClient.EXPECT().DeletePod(&suite.pods[1]).Return(nil).Times(1)
 
@@ -174,7 +172,23 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodInitContainer
 func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodWithUnknownReason() {
 	suite.pods[1].Status.ContainerStatuses[0].State.Waiting.Reason = "X"
 	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
-	suite.mockClient.EXPECT().DeletePod(&suite.pods[1]).Return(nil).Times(0)
+
+	suite.testRemediator()
+}
+
+// Doesn't restart opted-out Unhealthy Pod
+func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodsOptOut() {
+	suite.pods[1].ObjectMeta.Annotations["kube-remediator/CrashLoopBackOffRemediator"] = "false"
+	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
+
+	suite.testRemediator()
+}
+
+// Restart crashloop pod without annotation (Default opt-in)
+func (suite *TestCrashLoopBackOffReschedulerSuite) TestUnHealthyPodsDefaultsOptIn() {
+	delete(suite.pods[1].ObjectMeta.Annotations, "kube-remediator/CrashLoopBackOffRemediator")
+	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
+	suite.mockClient.EXPECT().DeletePod(&suite.pods[1]).Return(nil).Times(1)
 
 	suite.testRemediator()
 }

@@ -99,7 +99,7 @@ func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 }
 
 func (p *CrashLoopBackOffRescheduler) shouldReschedule(pod *v1.Pod) bool {
-	return (p.filter.annotation == "" || pod.ObjectMeta.Annotations[p.filter.annotation] == "true") && // Opted in
+	return (p.filter.annotation == "" || pod.ObjectMeta.Annotations[p.filter.annotation] != "false") && // not opted-out
 		len(pod.ObjectMeta.OwnerReferences) > 0 && // Assuming Pod has owner reference of kind Controller
 		p.isPodUnhealthy(pod)
 }
