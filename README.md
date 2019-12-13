@@ -14,7 +14,7 @@ Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale in
 
 - Listens to Pod update events
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (`failureThreshold` config)
-- Ignores Pods without annotation `kube-remediator/CrashLoopBackOffRemediator` (`annotation` config, use `""` to manage all pods )
+- Ignores Pods with annotation `kube-remediator/CrashLoopBackOffRemediator: "false"`
 - Can work in a single namespace, default is all namespaces `""` (`namespace` config)
 - Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back)
 

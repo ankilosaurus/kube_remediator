@@ -113,7 +113,7 @@ func (p *CrashLoopBackOffRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 }
 
 func (p *CrashLoopBackOffRescheduler) shouldReschedule(pod *v1.Pod) bool {
-	return (p.filter.annotation == "" || pod.ObjectMeta.Annotations[p.filter.annotation] == "true") && // Opted in
+	return (p.filter.annotation == "" || pod.ObjectMeta.Annotations[p.filter.annotation] != "false") && // not opted-out
 		len(pod.ObjectMeta.OwnerReferences) > 0 && // Assuming Pod has owner reference of kind Controller
 		p.isPodUnhealthy(pod)
 }
@@ -123,7 +123,7 @@ func (p *CrashLoopBackOffRescheduler) isPodUnhealthy(pod *v1.Pod) bool {
 	// Check if any of Containers is in CrashLoop
 	statuses := append(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses...)
 	for _, containerStatus := range statuses {
-		if containerStatus.RestartCount > p.filter.failureThreshold {
+		if containerStatus.RestartCount >= p.filter.failureThreshold {
 			if containerStatus.State.Waiting != nil && containerStatus.State.Waiting.Reason == "CrashLoopBackOff" {
 				return true
 			}

@@ -48,9 +48,6 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) SetupTest() {
 					Name: "controller",
 				},
 			},
-			Annotations: map[string]string{
-				"kube-remediator/CrashLoopBackOffRemediator": "true",
-			},
 		},
 		Status: corev1.PodStatus{
 			InitContainerStatuses: []corev1.ContainerStatus{
@@ -115,7 +112,7 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) TestKeepsUnhealthyPodWithoutO
 }
 
 func (suite *TestCrashLoopBackOffReschedulerSuite) TestKeepsPodBelowThreshold() {
-	suite.pods[0].Status.ContainerStatuses[0].RestartCount = 5
+	suite.pods[0].Status.ContainerStatuses[0].RestartCount = 4
 	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil)
 	suite.run()
 }
@@ -131,6 +128,25 @@ func (suite *TestCrashLoopBackOffReschedulerSuite) TestReschedulesBasedOnInitCon
 func (suite *TestCrashLoopBackOffReschedulerSuite) TestKeepsWithOtherReason() {
 	suite.pods[0].Status.ContainerStatuses[0].State.Waiting.Reason = "X"
 	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil)
+	suite.run()
+}
+
+func (suite *TestCrashLoopBackOffReschedulerSuite) TestKeepsOptedOutUnHealthyPods() {
+	suite.pods[0].ObjectMeta.Annotations = map[string]string{
+		"kube-remediator/CrashLoopBackOffRemediator": "false",
+	}
+	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
+
+	suite.run()
+}
+
+func (suite *TestCrashLoopBackOffReschedulerSuite) TestReschedulesUnHealthyPodsWithAnnotation() {
+	suite.pods[0].ObjectMeta.Annotations = map[string]string{
+		"kube-remediator/CrashLoopBackOffRemediator": "true",
+	}
+	suite.mockClient.EXPECT().GetPods("").Return(&corev1.PodList{Items: suite.pods}, nil).Times(1)
+	suite.mockClient.EXPECT().DeletePod(&suite.pods[0]).Return(nil).Times(1)
+
 	suite.run()
 }
 
