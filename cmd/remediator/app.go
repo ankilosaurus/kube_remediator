@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 )
@@ -56,7 +57,7 @@ func main() {
 	for _, r := range remediators {
 		err := r.Setup(logger, k8sClient)
 		if err != nil {
-			logger.Panic("Error initializing remediator", zap.String("TODO", "CLASS NAME %t or so"), zap.Error(err))
+			logger.Panic("Error initializing", zap.String("remediator", reflect.TypeOf(r).String()), zap.Error(err))
 		}
 
 		wg.Add(1)
