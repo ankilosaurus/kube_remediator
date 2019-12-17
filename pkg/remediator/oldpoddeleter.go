@@ -43,7 +43,7 @@ func (p *OldPodDeleter) deleteOldPods() {
 		LabelSelector: "kube-remediator/OldPodDeleter=true",
 	})
 	if err != nil {
-		p.logger.Error("Error getting pod list: ", zap.Error(err))
+		p.logger.Error("Error getting pod list", zap.Error(err))
 		return
 	}
 
