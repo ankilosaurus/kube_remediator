@@ -1,4 +1,4 @@
-.PHONY: build test
+.PHONY: build test dev
 
 export GO111MODULE=on
 
@@ -11,3 +11,5 @@ test: build
 	go mod tidy && git diff --exit-code
 	go fmt ./... && git diff --exit-code
 
+dev: build
+	.build/remediator

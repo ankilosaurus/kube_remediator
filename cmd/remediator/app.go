@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strings"
 	"sync"
 	"syscall"
 )
@@ -35,15 +36,17 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 
-	// build a logger without timestamps because docker already logs with timestamps / use "message"
+	// build a logger:
+	// - without timestamps because docker already logs with timestamps
+	// - use "message" instead of "msg" for consistency with other services / datadog parsing
+	// - remove caller since it points to shared methods most of the time anyway
 	loggerConfig := zap.NewProductionConfig()
 	loggerConfig.EncoderConfig.TimeKey = ""
 	loggerConfig.EncoderConfig.MessageKey = "message"
-	logger, err := loggerConfig.Build()
-	runtime.Must(err)
+	loggerConfig.DisableCaller = true
 
-	// init client
-	k8sClient, err := k8s.NewClient(logger)
+	// general logger
+	logger, err := loggerConfig.Build()
 	runtime.Must(err)
 
 	wg.Add(1)
@@ -55,9 +58,21 @@ func main() {
 	}
 
 	for _, r := range remediators {
-		err := r.Setup(logger, k8sClient)
+		// remediator.OldPodDeleter -> OldPodDeleter
+		name := strings.Split(reflect.TypeOf(r).String(), ".")[1]
+
+		// make each logged line show what remediator it came from
+		loggerConfig.InitialFields = map[string]interface{}{"remediator": name}
+
+		logger, err := loggerConfig.Build()
+		runtime.Must(err)
+
+		k8sClient, err := k8s.NewClient(logger)
+		runtime.Must(err)
+
+		err = r.Setup(logger, k8sClient)
 		if err != nil {
-			logger.Panic("Error initializing", zap.String("remediator", reflect.TypeOf(r).String()), zap.Error(err))
+			logger.Panic("Error initializing", zap.Error(err))
 		}
 
 		wg.Add(1)

@@ -51,8 +51,7 @@ Running locally on currently selected kubernetes cluster with go ~> 1.12.9:
 ```bash
 unset GOPATH
 go mod vendor # install into local directory instead of global path
-make build
-.build/remediator # run on cluster from $KUBECONFIG (defaults to ~/.kube/config) 
+make dev # run on cluster from $KUBECONFIG (defaults to ~/.kube/config)
 
 # test CrashLoopBackOffRemediator by seeing if this pod is rescheduled when it crashloops after it's restarted failureThreshold times
 kubectl apply -f examples/crashloop_pod.yml
