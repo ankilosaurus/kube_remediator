@@ -9,7 +9,7 @@ RUN apk update && apk add --no-cache git ca-certificates
 RUN CGO_ENABLED=0 GOOS=linux go build -o /remediator cmd/remediator/app.go
 
 # pack
-FROM gcr.io/docker-images-180022/base/alpine:3.10
+FROM alpine
 
 WORKDIR .
 
