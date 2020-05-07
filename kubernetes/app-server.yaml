@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kube-remediator
@@ -22,8 +22,9 @@ spec:
       serviceAccountName: monitor-pods-acc
       containers:
         - name: remediator
-          image: ankylosaurus/kube-remediator:informer
-          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           resources:
             limits:
               cpu: 100m
