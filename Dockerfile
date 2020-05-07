@@ -1,20 +1,27 @@
 # build
-FROM golang:1.12-alpine AS builder
+FROM golang:1.14-alpine AS builder
 
 WORKDIR /app
-COPY . .
-RUN apk update && apk add --no-cache git ca-certificates
+
+ENV CGO_ENABLED 0
 
 # vendor first so we fail when a dependency is missing and do not install random versions
-RUN CGO_ENABLED=0 GOOS=linux go build -o /remediator cmd/remediator/app.go
+COPY go.mod go.sum ./
+RUN go mod download
 
-# pack
-FROM alpine
+# build
+COPY cmd cmd
+COPY pkg pkg
+RUN go build -o /remediator cmd/remediator/app.go
+
+# clean image with only executable
+FROM scratch
 
 WORKDIR .
 
 ADD config config
-
 COPY --from=builder /remediator .
+
+USER 1000:1000
 
 CMD ["./remediator"]
