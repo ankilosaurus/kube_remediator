@@ -47,15 +47,30 @@ Configuration options:
 
 ## Development
 
-Running locally on currently selected kubernetes cluster with go ~> 1.12.9:
+### Boot Option A:
+
+Run in local kubernetes with docker-for-mac
+
+```bash
+rake server
+```
+
+### Boot Option B:
+
+Run against local kubernetes cluster with go:
+
 ```bash
 unset GOPATH
 go mod vendor # install into local directory instead of global path
 make dev # run on cluster from $KUBECONFIG (defaults to ~/.kube/config)
+```
 
-# test CrashLoopBackOffRemediator by seeing if this pod is rescheduled when it crashloops after it's restarted failureThreshold times
+### Test
+
+```bash
+# CrashLoopBackOffRemediator: pod is rescheduled after restarting 5 times ?
 kubectl apply -f examples/crashloop_pod.yml
 
-# test OldPodDeleter by seeing if this pod is deleted when it gets old
+# OldPodDeleter: pod is deleted when it gets 24h old ? (best change the 24h in the code to 1min)
 kubectl apply -f examples/old_pod.yml
 ```
