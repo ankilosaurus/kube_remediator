@@ -67,6 +67,8 @@ make dev # run on cluster from $KUBECONFIG (defaults to ~/.kube/config)
 
 ### Test
 
+Run unit tests: `make test`
+
 ```bash
 # CrashLoopBackOffRemediator: pod is rescheduled after restarting 5 times ?
 kubectl apply -f examples/crashloop_pod.yml
