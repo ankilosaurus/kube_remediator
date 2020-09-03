@@ -6,13 +6,14 @@
 ## Remediators
 - [Reschedules Pods in CrashLoopBackOff](#crashloopbackoff-rescheduler)
 - [Deletes unbound PVCs](#unbound-persistentvolumeclaim-cleaner)
+- [Deletes Failed Pods in Out of CPU/Memory](#failedpods-rescheduler)
 
 
 ### [CrashLoopBackOff Rescheduler](pkg/remediator/crashloopbackoffrescheduler.go)
 
 Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale init-container/sidecar/configmap 
 
-- Listens to Pod update events
+- Listens to Pod update events and does a Pod list
 - Looks for containers in CrashLoopBackOff with `restartCount` > 5 (`failureThreshold` config)
 - Ignores Pods with annotation `kube-remediator/CrashLoopBackOffRemediator: "false"`
 - Can work in a single namespace, default is all namespaces `""` (`namespace` config)
@@ -24,9 +25,19 @@ Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale in
 Deletes `Pod`s with label `kube-remediator/OldPodDeleter=true` older than 24h
 
 
+### [Failed Pods Rescheduler](pkg/remediator/failedpodsrescheduler.go)
+
+Reschedules `Failed` `Pods` by deleting them, since they are not automatically cleaned up.
+
+- Listens to Pod update events and does a Pod list
+- Looks for containers in Failed status with reason `OutOfCpu` or `OutofMemory`.
+- Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back)
+- Ignores Pods for Jobs because they can be automatically cleaned up.
+
+
 ### Unbound PersistentVolumeClaim cleaner TODO
 
-Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are not automatically cleanup up otherwise
+Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are not automatically cleaned up up otherwise
 
 - Waits for 7 days(configurable) before deleting
 - Ignores if `PersistentVolume` has `persistentVolumeReclaimPolicy` set to `Retain`
