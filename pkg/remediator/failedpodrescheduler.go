@@ -70,8 +70,8 @@ func (p *FailedPodRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 }
 
 func (p *FailedPodRescheduler) shouldReschedule(pod *v1.Pod) bool {
-	reason := strings.ToLower(pod.Status.Reason) // we saw OutOfCPU and OutOfcpu
-	if pod.Status.Phase != "Failed" || (reason != "outofcpu" && reason != "outofmemory") {
+	reason := strings.ToLower(pod.Status.Reason) // we saw OutOfCPU, OutOfcpu, Outofmemory and UnexpectedAdmissionError
+	if pod.Status.Phase != "Failed" || (reason != "outofcpu" && reason != "outofmemory" && reason != "unexpectedadmissionerror") {
 		return false
 	}
 

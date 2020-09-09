@@ -7,6 +7,7 @@ require (
 	github.com/golang/mock v1.3.1
 	github.com/google/cadvisor v0.34.0
 	github.com/googleapis/gnostic v0.3.1 // indirect
+	github.com/grosser/go-testcov v1.1.3 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/json-iterator/go v1.1.7 // indirect
