@@ -30,14 +30,14 @@ Deletes `Pod`s with label `kube-remediator/OldPodDeleter=true` older than 24h
 Reschedules `Failed` `Pods` by deleting them, since they are not automatically cleaned up.
 
 - Listens to Pod update events and does a Pod list
-- Looks for containers in Failed status with reason `OutOfCpu` or `OutofMemory`.
+- Finds pods in Failed status with reason `OutOfCpu`, `OutofMemory`, or `UnexpectedAdmissionError`.
 - Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back)
 - Ignores Pods for Jobs because they can be automatically cleaned up.
 
 
 ### Unbound PersistentVolumeClaim cleaner TODO
 
-Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are not automatically cleaned up up otherwise
+Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are not automatically cleaned up otherwise
 
 - Waits for 7 days(configurable) before deleting
 - Ignores if `PersistentVolume` has `persistentVolumeReclaimPolicy` set to `Retain`
