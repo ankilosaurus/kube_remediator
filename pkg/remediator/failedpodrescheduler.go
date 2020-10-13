@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"strings"
 	"sync"
+	"time"
 )
 
 type FailedPodRescheduler struct {
@@ -56,6 +57,9 @@ func (p *FailedPodRescheduler) reschedulePods() {
 func (p *FailedPodRescheduler) rescheduleIfNecessary(oldObj, newObj interface{}) {
 	pod := newObj.(*v1.Pod)
 	if p.shouldReschedule(pod) {
+		// Do not delete failed pods instantly
+		// Allow users to debug and log pipeline to find out metadata
+		time.Sleep(5 * time.Minute)
 		p.deletePod(*pod)
 	}
 }
