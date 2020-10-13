@@ -49,7 +49,7 @@ func (p *FailedPodRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 
 func (p *FailedPodRescheduler) reschedulePods() {
 	p.logger.Info("Reconcile")
-	for _, pod := range *p.getCrashLoopBackOffPods() {
+	for _, pod := range *p.getFailedPods() {
 		p.rescheduleIfNecessary(nil, &pod)
 	}
 }
@@ -64,7 +64,7 @@ func (p *FailedPodRescheduler) rescheduleIfNecessary(oldObj, newObj interface{})
 	}
 }
 
-func (p *FailedPodRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
+func (p *FailedPodRescheduler) getFailedPods() *[]v1.Pod {
 	pods, err := p.client.GetPods("", metav1.ListOptions{FieldSelector: "status.phase=Failed"})
 	if err != nil {
 		p.logger.Error("Error getting pod list: ", zap.Error(err))
@@ -74,7 +74,7 @@ func (p *FailedPodRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 }
 
 func (p *FailedPodRescheduler) shouldReschedule(pod *v1.Pod) bool {
-	reason := strings.ToLower(pod.Status.Reason) // we saw OutOfCPU, OutOfcpu, Outofmemory and UnexpectedAdmissionError
+	reason := strings.ToLower(pod.Status.Reason) // we saw OutOfCPU, OutOfcpu and Outofmemory
 	if pod.Status.Phase != "Failed" || (reason != "outofcpu" && reason != "outofmemory") {
 		return false
 	}

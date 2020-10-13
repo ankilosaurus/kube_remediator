@@ -30,7 +30,7 @@ Deletes `Pod`s with label `kube-remediator/OldPodDeleter=true` older than 24h
 Reschedules `Failed` `Pods` by deleting them, since they are not automatically cleaned up.
 
 - Listens to Pod update events and does a Pod list
-- Finds pods in Failed status with reason `OutOfCpu`, `OutofMemory`, or `UnexpectedAdmissionError`.
+- Finds pods in Failed status with reason `OutOfCpu`, `OutofMemory`.
 - Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back)
 - Ignores Pods for Jobs because they can be automatically cleaned up.
 
