@@ -71,7 +71,7 @@ func (p *FailedPodRescheduler) getCrashLoopBackOffPods() *[]v1.Pod {
 
 func (p *FailedPodRescheduler) shouldReschedule(pod *v1.Pod) bool {
 	reason := strings.ToLower(pod.Status.Reason) // we saw OutOfCPU, OutOfcpu, Outofmemory and UnexpectedAdmissionError
-	if pod.Status.Phase != "Failed" || (reason != "outofcpu" && reason != "outofmemory" && reason != "unexpectedadmissionerror") {
+	if pod.Status.Phase != "Failed" || (reason != "outofcpu" && reason != "outofmemory") {
 		return false
 	}
 
@@ -79,7 +79,7 @@ func (p *FailedPodRescheduler) shouldReschedule(pod *v1.Pod) bool {
 	if len(pod.ObjectMeta.OwnerReferences) == 0 {
 		return false
 	}
-	// Job pods are deleted by Kubenrnetes
+	// Job pods are deleted by Kubernetes
 	for _, ownerReference := range pod.ObjectMeta.OwnerReferences {
 		if ownerReference.Kind == "Job" {
 			return false
