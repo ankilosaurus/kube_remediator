@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"strings"
 	"sync"
+	"time"
 )
 
 type FailedPodRescheduler struct {
@@ -56,9 +57,6 @@ func (p *FailedPodRescheduler) reschedulePods() {
 func (p *FailedPodRescheduler) rescheduleIfNecessary(oldObj, newObj interface{}) {
 	pod := newObj.(*v1.Pod)
 	if p.shouldReschedule(pod) {
-		// Do not delete failed pods instantly
-		// Allow users to debug and log pipeline to find out metadata
-		// time.Sleep(5 * time.Minute)
 		p.deletePod(*pod)
 	}
 }
@@ -82,11 +80,18 @@ func (p *FailedPodRescheduler) shouldReschedule(pod *v1.Pod) bool {
 	if len(pod.ObjectMeta.OwnerReferences) == 0 {
 		return false
 	}
+
 	// Job pods are deleted by Kubernetes
 	for _, ownerReference := range pod.ObjectMeta.OwnerReferences {
 		if ownerReference.Kind == "Job" {
 			return false
 		}
 	}
+
+	// Keep pods for 5 mins to be able to debug and log pipeline to find out metadata
+	if pod.ObjectMeta.CreationTimestamp.Time.After(time.Now().Add(-5 * time.Minute)) {
+		return false
+	}
+
 	return true
 }

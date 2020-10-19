@@ -33,6 +33,7 @@ Reschedules `Failed` `Pods` by deleting them, since they are not automatically c
 - Finds pods in Failed status with reason `OutOfCpu`, `OutofMemory`.
 - Ignores Pods without `ownerReferences` (Avoid deleting something which does not come back)
 - Ignores Pods for Jobs because they can be automatically cleaned up.
+- Deletes the pods in failed status after 5 mins to have time to debug
 
 
 ### Unbound PersistentVolumeClaim cleaner TODO
@@ -79,6 +80,8 @@ make dev # run on cluster from $KUBECONFIG (defaults to ~/.kube/config)
 ### Test
 
 Run unit tests: `make test`
+Run a single suite: `go test -run TestSuiteFailedPodRescheduler github.com/aksgithub/kube_remediator/pkg/remediator`
+Run a single test: comment out all other test in the suite and run the suite. TODO: improve.
 
 ```bash
 # CrashLoopBackOffRemediator: pod is rescheduled after restarting 5 times ?
@@ -87,3 +90,5 @@ kubectl apply -f examples/crashloop_pod.yml
 # OldPodDeleter: pod is deleted when it gets 24h old ? (best change the 24h in the code to 1min)
 kubectl apply -f examples/old_pod.yml
 ```
+
+Note: failed expectation in one test can lead to other tests failing. Only run one test when debugging.
