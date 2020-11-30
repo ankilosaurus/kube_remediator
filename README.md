@@ -33,6 +33,9 @@ Reschedules `Failed` `Pods` by deleting them, since they are not automatically c
 - Ignores Pods for Jobs because they can be automatically cleaned up.
 - Deletes the pods in failed status after 5 mins to have time to debug
 
+### [Completed Pods Deleter](pkg/remediator/completedpoddeleter.go)
+
+Deletes `Pods` that in `Completed` status for more than 24h.
 
 ### Unbound PersistentVolumeClaim cleaner TODO
 
