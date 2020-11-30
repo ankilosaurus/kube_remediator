@@ -1,4 +1,3 @@
-
 package remediator
 
 import (
@@ -38,7 +37,7 @@ func (p *Base) reconcileEvery(ctx context.Context, fn func(), interval time.Dura
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	p.logStartAndStop(func(){
+	p.logStartAndStop(func() {
 		// Run on start
 		fn()
 

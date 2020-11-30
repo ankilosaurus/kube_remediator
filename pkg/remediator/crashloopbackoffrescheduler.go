@@ -67,7 +67,7 @@ func (p *CrashLoopBackOffRescheduler) Setup(logger *zap.Logger, client k8s.Clien
 func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	p.logStartAndStop(func(){
+	p.logStartAndStop(func() {
 		// Check for any CrashLoopBackOff Pods first
 		p.reschedulePods()
 

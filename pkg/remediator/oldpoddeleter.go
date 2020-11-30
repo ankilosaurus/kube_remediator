@@ -15,7 +15,7 @@ type OldPodDeleter struct {
 func (p *OldPodDeleter) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	p.reconcileEvery(ctx, p.deleteOldPods, 1 * time.Hour)
+	p.reconcileEvery(ctx, p.deleteOldPods, 1*time.Hour)
 }
 
 func (p *OldPodDeleter) deleteOldPods() {
@@ -39,4 +39,3 @@ func (p *OldPodDeleter) deleteOldPods() {
 		p.deletePod(pod)
 	}
 }
-

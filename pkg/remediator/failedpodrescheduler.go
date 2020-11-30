@@ -32,7 +32,7 @@ func (p *FailedPodRescheduler) Setup(logger *zap.Logger, client k8s.ClientInterf
 func (p *FailedPodRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	p.logStartAndStop(func(){
+	p.logStartAndStop(func() {
 		// Check for any Failed Pods first
 		p.reschedulePods()
 		// TODO: filter failed pods here to avoid overhead

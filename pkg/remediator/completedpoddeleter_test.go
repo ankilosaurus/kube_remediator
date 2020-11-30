@@ -40,7 +40,7 @@ func (suite *TestCompletedPodDeleterSuite) SetupTest() {
 			CreationTimestamp: metav1.NewTime(time.Now().Add(-25 * time.Hour)),
 		},
 		Status: corev1.PodStatus{
-			Phase:  "Completed",
+			Phase: "Completed",
 		},
 	}}
 }
