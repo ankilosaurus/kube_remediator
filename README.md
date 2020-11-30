@@ -77,9 +77,9 @@ make dev # run on cluster from $KUBECONFIG (defaults to ~/.kube/config)
 
 ### Test
 
-Run unit tests: `make test`
-Run a single suite: `go test -run TestSuiteFailedPodRescheduler github.com/aksgithub/kube_remediator/pkg/remediator`
-Run a single test: comment out all other test in the suite and run the suite. TODO: improve.
+- Run unit tests: `make test`
+- Run a single suite: `go test -run TestSuiteFailedPodRescheduler github.com/aksgithub/kube_remediator/pkg/remediator`
+- Run a single test: comment out all other test in the suite and run the suite. TODO: improve.
 
 ```bash
 # CrashLoopBackOffRemediator: pod is rescheduled after restarting 5 times ?

@@ -2,7 +2,6 @@ package remediator
 
 import (
 	"context"
-	"github.com/aksgithub/kube_remediator/pkg/k8s"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sync"
@@ -16,23 +15,7 @@ type OldPodDeleter struct {
 func (p *OldPodDeleter) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	ticker := time.NewTicker(1 * time.Hour)
-	defer ticker.Stop()
-
-	p.logger.Info("Starting")
-
-	// Run on start
-	p.deleteOldPods()
-
-	for {
-		select {
-		case <-ticker.C:
-			p.deleteOldPods() // untested section
-		case <-ctx.Done():
-			p.logger.Info("Stopping", zap.String("reason", "Signal"))
-			return
-		}
-	}
+	p.reconcileEvery(ctx, p.deleteOldPods, 1 * time.Hour)
 }
 
 func (p *OldPodDeleter) deleteOldPods() {
@@ -57,8 +40,3 @@ func (p *OldPodDeleter) deleteOldPods() {
 	}
 }
 
-func (p *OldPodDeleter) Setup(logger *zap.Logger, client k8s.ClientInterface) error {
-	p.client = client
-	p.logger = logger
-	return nil
-}
