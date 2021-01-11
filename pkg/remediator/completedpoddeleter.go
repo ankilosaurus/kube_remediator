@@ -22,7 +22,7 @@ func (p *CompletedPodDeleter) deleteCompletedPods() {
 	p.logger.Info("Running")
 
 	// get completed pods
-	pods, err := p.client.GetPods("", metav1.ListOptions{FieldSelector: "status.phase=Completed"})
+	pods, err := p.client.GetPods("", metav1.ListOptions{FieldSelector: "status.phase=Succeeded"})
 	if err != nil {
 		p.logger.Error("Error getting pod list: ", zap.Error(err))
 		return

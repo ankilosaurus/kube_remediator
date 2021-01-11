@@ -20,7 +20,7 @@ Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale in
 
 ### [Old Pod Deleter](pkg/remediator/oldpoddeleter.go)
 
-Deletes `Pod`s with label `kube-remediator/OldPodDeleter=true` older than 24h
+Deletes `Pods` with label `kube-remediator/OldPodDeleter=true` older than 24h
 
 
 ### [Failed Pods Rescheduler](pkg/remediator/failedpodsrescheduler.go)
