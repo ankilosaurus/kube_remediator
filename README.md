@@ -20,7 +20,7 @@ Reschedules `CrashLoopBackOff` `Pod` to fix permanent crashes caused by stale in
 
 ### [Old Pod Deleter](pkg/remediator/oldpoddeleter.go)
 
-Deletes `Pod`s with label `kube-remediator/OldPodDeleter=true` older than 24h
+Deletes `Pods` with label `kube-remediator/OldPodDeleter=true` older than 24h
 
 
 ### [Failed Pods Rescheduler](pkg/remediator/failedpodsrescheduler.go)
@@ -33,6 +33,9 @@ Reschedules `Failed` `Pods` by deleting them, since they are not automatically c
 - Ignores Pods for Jobs because they can be automatically cleaned up.
 - Deletes the pods in failed status after 5 mins to have time to debug
 
+### [Completed Pods Deleter](pkg/remediator/completedpoddeleter.go)
+
+Deletes `Pods` that in `Completed` status for more than 24h.
 
 ### Unbound PersistentVolumeClaim cleaner TODO
 
@@ -77,9 +80,9 @@ make dev # run on cluster from $KUBECONFIG (defaults to ~/.kube/config)
 
 ### Test
 
-Run unit tests: `make test`
-Run a single suite: `go test -run TestSuiteFailedPodRescheduler github.com/aksgithub/kube_remediator/pkg/remediator`
-Run a single test: comment out all other test in the suite and run the suite. TODO: improve.
+- Run unit tests: `make test`
+- Run a single suite: `go test -run TestSuiteFailedPodRescheduler github.com/aksgithub/kube_remediator/pkg/remediator`
+- Run a single test: comment out all other test in the suite and run the suite. TODO: improve.
 
 ```bash
 # CrashLoopBackOffRemediator: pod is rescheduled after restarting 5 times ?

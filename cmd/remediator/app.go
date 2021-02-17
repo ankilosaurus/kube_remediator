@@ -55,6 +55,8 @@ func main() {
 	remediators := []remediator.BaseIntf{
 		&remediator.OldPodDeleter{},
 		&remediator.CrashLoopBackOffRescheduler{},
+		&remediator.FailedPodRescheduler{},
+		&remediator.CompletedPodDeleter{},
 	}
 
 	for _, r := range remediators {

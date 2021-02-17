@@ -32,19 +32,19 @@ func (p *FailedPodRescheduler) Setup(logger *zap.Logger, client k8s.ClientInterf
 func (p *FailedPodRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	p.logger.Info("Starting")
-	// Check for any Failed Pods first
-	p.reschedulePods()
-	// TODO: filter failed pods here to avoid overhead
-	informer := p.informerFactory.Core().V1().Pods().Informer()
+	p.logStartAndStop(func() {
+		// Check for any Failed Pods first
+		p.reschedulePods()
+		// TODO: filter failed pods here to avoid overhead
+		informer := p.informerFactory.Core().V1().Pods().Informer()
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: p.rescheduleIfNecessary,
+		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			UpdateFunc: p.rescheduleIfNecessary,
+		})
+		informer.Run(ctx.Done())
+
+		<-ctx.Done()
 	})
-	informer.Run(ctx.Done())
-
-	<-ctx.Done()
-	p.logger.Info("Stopping", zap.String("reason", "Signal"))
 }
 
 func (p *FailedPodRescheduler) reschedulePods() {

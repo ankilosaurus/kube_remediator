@@ -67,20 +67,20 @@ func (p *CrashLoopBackOffRescheduler) Setup(logger *zap.Logger, client k8s.Clien
 func (p *CrashLoopBackOffRescheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	p.logger.Info("Starting")
-	// Check for any CrashLoopBackOff Pods first
-	p.reschedulePods()
+	p.logStartAndStop(func() {
+		// Check for any CrashLoopBackOff Pods first
+		p.reschedulePods()
 
-	informer := p.informerFactory.Core().V1().Pods().Informer()
+		informer := p.informerFactory.Core().V1().Pods().Informer()
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: p.rescheduleIfNecessary,
+		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			UpdateFunc: p.rescheduleIfNecessary,
+		})
+		informer.Run(ctx.Done())
+
+		<-ctx.Done()
+		p.metrics.UnRegister()
 	})
-	informer.Run(ctx.Done())
-
-	<-ctx.Done()
-	p.metrics.UnRegister()
-	p.logger.Info("Stopping", zap.String("reason", "Signal"))
 }
 
 func (p *CrashLoopBackOffRescheduler) reschedulePods() {
