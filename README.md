@@ -1,4 +1,4 @@
-# Kube Remediator [![Build Status](https://travis-ci.com/aksgithub/kube_remediator.svg)](https://travis-ci.com/aksgithub/kube_remediator) [![coverage](https://img.shields.io/badge/coverage-100%25-success.svg)](https://github.com/aksgithub/kube_remediator)
+# Kube Remediator [![Test](https://github.com/ankilosaurus/kube_remediator/actions/workflows/test.yaml/badge.svg)](https://github.com/ankilosaurus/kube_remediator/actions/workflows/test.yaml)
 
 
 ## Remediators
