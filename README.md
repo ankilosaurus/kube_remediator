@@ -44,6 +44,16 @@ Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are n
 - Waits for 7 days(configurable) before deleting
 - Ignores if `PersistentVolume` has `persistentVolumeReclaimPolicy` set to `Retain`
 
+## Remediator Policy
+You can define a remediator policy to control the following options:
+- `disabled_remediators`: All remediators are enabled by default unless listed in this option.
+    example:
+  ```json
+    {
+      "disabled_remediators": ["FailedPodRescheduler"]
+    }
+  ```
+  This can also be set via an environment variable: `DISABLED_REMEDIATORS=OldPodDeleter,FailedPodRescheduler`
 
 ## Deploy
 
