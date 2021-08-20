@@ -1,4 +1,4 @@
-# Kube Remediator [![Build Status](https://travis-ci.com/aksgithub/kube_remediator.svg)](https://travis-ci.com/aksgithub/kube_remediator) [![coverage](https://img.shields.io/badge/coverage-100%25-success.svg)](https://github.com/aksgithub/kube_remediator)
+# Kube Remediator [![Test](https://github.com/ankilosaurus/kube_remediator/actions/workflows/test.yaml/badge.svg)](https://github.com/ankilosaurus/kube_remediator/actions/workflows/test.yaml)
 
 
 ## Remediators
@@ -44,6 +44,16 @@ Deletes `PersistentVolumeClaim` left behind by deleted `StatefulSet`, that are n
 - Waits for 7 days(configurable) before deleting
 - Ignores if `PersistentVolume` has `persistentVolumeReclaimPolicy` set to `Retain`
 
+## Remediator Policy
+You can define a remediator policy to control the following options:
+- `disabled_remediators`: All remediators are enabled by default unless listed in this option.
+    example:
+  ```json
+    {
+      "disabled_remediators": ["FailedPodRescheduler"]
+    }
+  ```
+  This can also be set via an environment variable: `DISABLED_REMEDIATORS=OldPodDeleter,FailedPodRescheduler`
 
 ## Deploy
 

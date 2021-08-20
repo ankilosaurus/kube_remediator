@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/aksgithub/kube_remediator/pkg/http"
 	"github.com/aksgithub/kube_remediator/pkg/k8s"
+	"github.com/aksgithub/kube_remediator/pkg/policy"
 	"github.com/aksgithub/kube_remediator/pkg/remediator"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -59,6 +60,8 @@ func main() {
 		&remediator.CompletedPodDeleter{},
 	}
 
+	remediatorPolicy := policy.LoadRemediatorPolicy()
+
 	for _, r := range remediators {
 		// remediator.OldPodDeleter -> OldPodDeleter
 		name := strings.Split(reflect.TypeOf(r).String(), ".")[1]
@@ -68,6 +71,11 @@ func main() {
 
 		logger, err := loggerConfig.Build()
 		runtime.Must(err)
+
+		if remediatorPolicy.IsDisabled(name) {
+			logger.Info("Skipping remediator as it is disabled.")
+			continue
+		}
 
 		k8sClient, err := k8s.NewClient(logger)
 		runtime.Must(err)
