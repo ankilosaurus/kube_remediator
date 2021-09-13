@@ -50,3 +50,11 @@ func TestLoadRemediatorsUsesEnvVar(t *testing.T) {
 	assert.Truef(t, policy.IsDisabled(OldPodDeleterRemediator),
 		"remediator should be disabled when set via env variable %s", DisabledEnvironmentVar)
 }
+
+func TestLoadRemediatorsAllowsMissingConfigFile(t *testing.T) {
+	viper.Reset()
+
+	policy := LoadRemediatorPolicy()
+	assert.NotNil(t, policy, "Policy should be initialized even when config file is not defined")
+	assert.Empty(t, policy.DisabledRemediators, "should not have any disabled remediators")
+}
