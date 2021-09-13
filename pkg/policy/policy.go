@@ -20,11 +20,10 @@ func LoadRemediatorPolicy() RemediatorPolicy {
 	viper.SetConfigType("json")
 	viper.AddConfigPath(ConfigPath)
 	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
-	runtime.Must(err)
+	viper.ReadInConfig()
 
 	policy := RemediatorPolicy{}
-	err = viper.Unmarshal(&policy)
+	err := viper.Unmarshal(&policy)
 	runtime.Must(err)
 
 	return policy
