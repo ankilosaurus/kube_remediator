@@ -22,6 +22,7 @@ spec:
       serviceAccountName: monitor-pods-acc
       containers:
         - name: remediator
+          image: "ghcr.io/ankilosaurus/kube_remediator:latest"
           securityContext:
             runAsNonRoot: true
             readOnlyRootFilesystem: true
