@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-//TODO: add more checks as needed
+// TODO: add more checks as needed
 func handleHealthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("ok"))
